@@ -238,4 +238,7 @@ export class Client {
   public bulkDeleteAllUserSessions(
     id: string
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public uploadData(
+    file: Buffer | ArrayBuffer | Blob | File
+  ): Promise<Cumulonimbus.Data.SuccessfulUpload>;
 }
