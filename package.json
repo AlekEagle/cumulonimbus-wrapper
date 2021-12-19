@@ -1,0 +1,31 @@
+{
+  "name": "cumulonimbus-wrapper",
+  "version": "1.0.0",
+  "description": "A wrapper for the Cumulonimbus API.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlekEagle/cumulonimbus-wrapper.git"
+  },
+  "keywords": [
+    "api-wrapper"
+  ],
+  "author": "Alek Evans",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AlekEagle/cumulonimbus-wrapper/issues"
+  },
+  "homepage": "https://github.com/AlekEagle/cumulonimbus-wrapper#readme",
+  "devDependencies": {
+    "@types/node": "^17.0.0",
+    "@types/node-fetch": "^2.5.12",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.6"
+  }
+}
