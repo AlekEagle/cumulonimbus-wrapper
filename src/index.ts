@@ -1,5 +1,6 @@
 import call from './RequestHandler';
 import { Cumulonimbus } from './Cumulonimbus';
+import toFormData from './DataToFormData';
 
 const WITH_BODY = { 'Content-Type': 'application/json' };
 
@@ -11,7 +12,10 @@ export class Client {
     endpointTemplate: string | ((...args: T) => string),
     method: string,
     headers: { [key: string]: string },
-    bodyTemplate: string | null | ((...args: T) => string | null)
+    bodyTemplate:
+      | string
+      | null
+      | ((...args: T) => string | ReturnType<typeof toFormData> | null)
   ): (...args: T) => Promise<M> {
     return async (...args: T): Promise<M> => {
       try {
@@ -97,7 +101,7 @@ export class Client {
     }
   }
 
-  constructor(token: string) {
+  public constructor(token: string) {
     this.token = token;
   }
 
@@ -116,12 +120,12 @@ export class Client {
     }
   }
 
-  getSelfSessionByID = this.manufactureMethodGet<
+  public getSelfSessionByID = this.manufactureMethodGet<
     [string | null],
     Cumulonimbus.Data.Session
   >(sid => (sid ? `/user/session/${sid}` : '/user/session'));
 
-  getSelfSessions = this.manufactureMethod<
+  public getSelfSessions = this.manufactureMethod<
     [number, number] | [],
     Cumulonimbus.Data.List<Cumulonimbus.Data.Session>
   >(
@@ -132,19 +136,19 @@ export class Client {
     () => null
   );
 
-  deleteSelfSessionByID = this.manufactureMethod<
+  public deleteSelfSessionByID = this.manufactureMethod<
     [string],
     Cumulonimbus.Data.Session
   >(session => `/user/session/${session}`, 'DELETE', {}, null);
 
-  bulkDeleteSelfSessionsByID = this.manufactureMethod<
+  public bulkDeleteSelfSessionsByID = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.DeleteBulk
   >('/user/sessions', 'DELETE', WITH_BODY, sessions =>
     JSON.stringify({ sessions })
   );
 
-  bulkDeleteAllSelfSessions = this.manufactureMethod<
+  public bulkDeleteAllSelfSessions = this.manufactureMethod<
     [boolean | null],
     Cumulonimbus.Data.DeleteBulk
   >(
@@ -155,9 +159,11 @@ export class Client {
     null
   );
 
-  getSelfUser = this.manufactureMethodGet<[], Cumulonimbus.Data.User>('/user');
+  public getSelfUser = this.manufactureMethodGet<[], Cumulonimbus.Data.User>(
+    '/user'
+  );
 
-  editSelfUser = this.manufactureMethod<
+  public editSelfUser = this.manufactureMethod<
     [string, { username?: string; newPassword?: string; email?: string }],
     Cumulonimbus.Data.User
   >('/user', 'PATCH', WITH_BODY, (password, body) => {
@@ -168,14 +174,14 @@ export class Client {
     return JSON.stringify({ ...payload, password });
   });
 
-  deleteSelfUser = this.manufactureMethod<
+  public deleteSelfUser = this.manufactureMethod<
     [string, string],
     Cumulonimbus.Data.User
   >('/users', 'DELETE', WITH_BODY, (username, password) =>
     JSON.stringify({ username, password })
   );
 
-  updateSelfDomain = this.manufactureMethod<
+  public updateSelfDomain = this.manufactureMethod<
     [string, string | null],
     Cumulonimbus.Data.User
   >(
@@ -185,42 +191,42 @@ export class Client {
     (domain, subdomain) => JSON.stringify({ domain, subdomain })
   );
 
-  getAllDomains = this.manufactureMethodGet<
-    [number, number],
+  public getAllDomains = this.manufactureMethodGet<
+    [number | null, number | null],
     Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>
-  >((limit, offset) => `/domains?limit=${limit}&offset=${offset}`);
+  >((limit, offset) => `/domains?limit=${limit || 50}&offset=${offset || 0}`);
 
-  getDomainByID = this.manufactureMethodGet<[string], Cumulonimbus.Data.Domain>(
-    id => `/domain/${id}`
-  );
+  public getDomainByID = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.Domain
+  >(id => `/domain/${id}`);
 
-  getAllSelfFiles = this.manufactureMethodGet<
+  public getAllSelfFiles = this.manufactureMethodGet<
     [number | null, number | null],
     Cumulonimbus.Data.List<Cumulonimbus.Data.File>
   >((limit, offset) => `/user/files?limit=${limit}&offset=${offset}`);
 
-  getSelfFileByID = this.manufactureMethodGet<[string], Cumulonimbus.Data.File>(
-    id => `/user/file/${id}`
-  );
+  public getSelfFileByID = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.File
+  >(id => `/user/file/${id}`);
 
-  deleteSelfFileByID = this.manufactureMethod<[string], Cumulonimbus.Data.File>(
-    id => `/user/file/${id}`,
-    'DELETE',
-    {},
-    null
-  );
+  public deleteSelfFileByID = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.File
+  >(id => `/user/file/${id}`, 'DELETE', {}, null);
 
-  bulkDeleteSelfFilesByID = this.manufactureMethod<
+  public bulkDeleteSelfFilesByID = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.DeleteBulk
   >('/user/files', 'DELETE', WITH_BODY, files => JSON.stringify({ files }));
 
-  bulkDeleteAllSelfFiles = this.manufactureMethod<
+  public bulkDeleteAllSelfFiles = this.manufactureMethod<
     [],
     Cumulonimbus.Data.DeleteBulk
   >('/user/files/all', 'DELETE', {}, null);
 
-  getAllInstructions = this.manufactureMethodGet<
+  public getAllInstructions = this.manufactureMethodGet<
     [number | null, number | null],
     Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>
   >(
@@ -228,21 +234,22 @@ export class Client {
       `/instructions?limit=${limit || 50}&offset=${offset || 0}`
   );
 
-  getInstructionByID = this.manufactureMethodGet<
+  public getInstructionByID = this.manufactureMethodGet<
     [string],
     Cumulonimbus.Data.Instruction
   >(id => `/instructions/${id}`);
 
-  getUsers = this.manufactureMethodGet<
+  public getUsers = this.manufactureMethodGet<
     [number | null, number | null],
     Cumulonimbus.Data.List<Cumulonimbus.Data.User>
   >((limit, offset) => `/users?limit=${limit || 50}&offset=${offset || 0}`);
 
-  getUserByID = this.manufactureMethodGet<[string], Cumulonimbus.Data.User>(
-    id => `/user/${id}`
-  );
+  public getUserByID = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.User
+  >(id => `/user/${id}`);
 
-  editUserByID = this.manufactureMethod<
+  public editUserByID = this.manufactureMethod<
     [string, { username?: string; password?: string; email?: string }],
     Cumulonimbus.Data.User
   >(
@@ -258,7 +265,7 @@ export class Client {
     }
   );
 
-  editUserDomain = this.manufactureMethod<
+  public editUserDomain = this.manufactureMethod<
     [string, string, string | null],
     Cumulonimbus.Data.User
   >(
@@ -268,21 +275,17 @@ export class Client {
     (id, domain, subdomain) => JSON.stringify({ domain, subdomain })
   );
 
-  toggleUserBan = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    id => `/users/${id}/ban`,
-    'PATCH',
-    {},
-    null
-  );
+  public toggleUserBan = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.User
+  >(id => `/users/${id}/ban`, 'PATCH', {}, null);
 
-  deleteUser = this.manufactureMethod<[string], Cumulonimbus.Data.DeleteBulk>(
-    id => `/user/${id}`,
-    'DELETE',
-    {},
-    null
-  );
+  public deleteUserByID = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.User
+  >(id => `/user/${id}`, 'DELETE', {}, null);
 
-  bulkDeleteUsers = this.manufactureMethod<
+  public bulkDeleteUsersByID = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.DeleteBulk
   >(
@@ -291,6 +294,154 @@ export class Client {
     WITH_BODY,
     users => JSON.stringify({ users })
   );
+
+  public createNewDomain = this.manufactureMethod<
+    [string, boolean],
+    Cumulonimbus.Data.Domain
+  >('/domain', 'POST', WITH_BODY, (domain, allowsSubdomains) =>
+    JSON.stringify({ domain, allowsSubdomains })
+  );
+
+  public updateDomainByID = this.manufactureMethod<
+    [string, boolean],
+    Cumulonimbus.Data.Domain
+  >(
+    id => `/domain/${id}`,
+    'PATCH',
+    WITH_BODY,
+    (id, allowsSubdomains) => JSON.stringify({ allowsSubdomains })
+  );
+
+  public deleteDomainByID = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.Domain
+  >(id => `/domain/${id}`, 'DELETE', {}, null);
+
+  public bulkDeleteDomainsByID = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >('/domains', 'DELETE', WITH_BODY, domains => JSON.stringify({ domains }));
+
+  public getAllFiles = this.manufactureMethodGet<
+    [number | null, number | null],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.File>
+  >((limit, offset) => `/files?limit=${limit || 50}&offset=${offset || 0}`);
+
+  public getAllUserFiles = this.manufactureMethodGet<
+    [string, number | null, number | null],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.File>
+  >(
+    (userID, limit, offset) =>
+      `/user/${userID}/files?limit=${limit || 50}&offset=${offset || 0}`
+  );
+
+  public getFileByID = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.File
+  >(fileID => `/file/${fileID}`);
+
+  public deleteFileByID = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.File
+  >(fileID => `/file/${fileID}`, 'DELETE', {}, null);
+
+  public bulkDeleteFilesByID = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >('/files', 'DELETE', WITH_BODY, files => JSON.stringify({ files }));
+
+  public createInstruction = this.manufactureMethod<
+    [string, string[], string, string, string, string],
+    Cumulonimbus.Data.Instruction
+  >(
+    '/instruction',
+    'POST',
+    WITH_BODY,
+    (name, steps, filename, fileContent, description, displayName) =>
+      JSON.stringify({
+        name,
+        steps,
+        filename,
+        fileContent,
+        description,
+        displayName
+      })
+  );
+
+  public updateInstructionByID = this.manufactureMethod<
+    [
+      string,
+      {
+        steps?: string[];
+        filename?: string;
+        fileContent?: string;
+        description?: string;
+        displayName?: string;
+      }
+    ],
+    Cumulonimbus.Data.Instruction
+  >(
+    id => `/instruction/${id}`,
+    'PATCH',
+    WITH_BODY,
+    (id, newContent) => {
+      let payload: { [key: string]: string | string[] } = {};
+      Object.entries(newContent).forEach(a => {
+        if (a[1]) payload[a[0]] = a[1];
+      });
+      return JSON.stringify(payload);
+    }
+  );
+
+  public deleteInstructionByID = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.Instruction
+  >(id => `/instruction/${id}`, 'DELETE', {}, null);
+
+  public bulkDeleteInstructionsByID = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >('/instructions', 'DELETE', WITH_BODY, instructions =>
+    JSON.stringify({ instructions })
+  );
+
+  public getUserSessionsByID = this.manufactureMethodGet<
+    [string, number | null, number | null],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.Session>
+  >(
+    (id, limit, offset) =>
+      `/user/${id}/sessions?limit=${limit || 50}&offset=${offset || 0}`
+  );
+
+  public getUserSessionByID = this.manufactureMethodGet<
+    [string, string],
+    Cumulonimbus.Data.Session
+  >((id, sid) => `/user/${id}/session/${sid}`);
+
+  public deleteUserSessionByID = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.Session
+  >((id, sid) => `/user/${id}/session/${sid}`, 'DELETE', {}, null);
+
+  public bulkDeleteUserSessionsByID = this.manufactureMethod<
+    [string, string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >(
+    id => `/user/${id}/sessions`,
+    'DELETE',
+    WITH_BODY,
+    (id, sessions) => JSON.stringify({ sessions })
+  );
+
+  public bulkDeleteAllUserSessions = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.DeleteBulk
+  >(id => `/user/${id}/sessions/all`, 'DELETE', {}, null);
+
+  public uploadData = this.manufactureMethod<
+    [Buffer | ArrayBuffer | Blob | File],
+    Cumulonimbus.Data.SuccessfulUpload
+  >('/upload', 'POST', {}, file => toFormData(file));
 }
 
 export default {

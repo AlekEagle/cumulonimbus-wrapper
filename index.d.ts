@@ -130,5 +130,112 @@ export class Client {
     username: string,
     password: string
   ): Promise<Cumulonimbus.Data.User>;
-  public updateSelfDomain;
+  public updateSelfDomain(
+    domain: string,
+    subdomain?: string
+  ): Promise<Cumulonimbus.Data.User>;
+  public getAllDomains(
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>>;
+  public getAllSelfFiles(
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
+  public getSelfFileByID(id: string): Promise<Cumulonimbus.Data.File>;
+  public deleteSelfFileByID(id: string): Promise<Cumulonimbus.Data.File>;
+  public bulkDeleteSelfFilesByID(
+    files: string[]
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public BulkDeleteAllSelfFiles(): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public getAllInstructions(
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>>;
+  public getInstructionByID(id: string): Promise<Cumulonimbus.Data.Instruction>;
+  public getUserByID(id: string): Promise<Cumulonimbus.Data.User>;
+  public editUserByID(
+    id: string,
+    newContent: { username?: string; password?: string; email?: string }
+  ): Promise<Cumulonimbus.Data.User>;
+  public editUserDomain(
+    id: string,
+    domain: string,
+    subdomain?: string | null
+  ): Promise<Cumulonimbus.Data.User>;
+  public toggleUserBan(id: string): Promise<Cumulonimbus.Data.User>;
+  public deleteUserByID(id: string): Promise<Cumulonimbus.Data.User>;
+  public bulkDeleteUsersByID(
+    users: string[]
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public createNewDomain(
+    domain: string,
+    allowsSubdomains: boolean
+  ): Promise<Cumulonimbus.Data.Domain>;
+  public updateDomainByID(
+    id: string,
+    allowsSubdomains: boolean
+  ): Promise<Cumulonimbus.Data.Domain>;
+  public deleteDomainByID(id: string): Promise<Cumulonimbus.Data.Domain>;
+  public bulkDeleteDomainsByID(
+    domains: string[]
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public getAllFiles(
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
+  public getAllUserFiles(
+    userID: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
+  public getFileByID(fileID: string): Promise<Cumulonimbus.Data.File>;
+  public deleteFileByID(fileID: string): Promise<Cumulonimbus.Data.File>;
+  public bulkDeleteFilesByID(
+    files: string[]
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public createInstruction(
+    name: string,
+    steps: string[],
+    filename: string,
+    fileContent: string,
+    description: string,
+    displayName: string
+  ): Promise<Cumulonimbus.Data.Instruction>;
+  public updateInstructionByID(
+    id: string,
+    newContent: {
+      steps?: string[];
+      filename?: string;
+      fileContent?: string;
+      description?: string;
+      displayName?: string;
+    }
+  ): Promise<Cumulonimbus.Data.Instruction>;
+  public deleteInstructionByID(
+    id: string
+  ): Promise<Cumulonimbus.Data.Instruction>;
+  public bulkDeleteInstructionsByID(
+    instructions: string[]
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public getUserSessionsByID(
+    id: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>;
+  public getUserSessionByID(
+    id: string,
+    sid: string
+  ): Promise<Cumulonimbus.Data.Session>;
+  public deleteUserSessionByID(
+    id: string,
+    sid: string
+  ): Promise<Cumulonimbus.Data.Session>;
+  public bulkDeleteUserSessionsByID(
+    id: string,
+    sessions: string[]
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public bulkDeleteAllUserSessions(
+    id: string
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
 }
