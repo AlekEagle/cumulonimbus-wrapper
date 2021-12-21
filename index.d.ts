@@ -3,6 +3,12 @@ export namespace Cumulonimbus {
 
   export const VERSION: string;
 
+  export interface RateLimitData {
+    maxRequests: number;
+    remainingRequests: number;
+    resetsAt: number;
+  }
+
   export namespace Data {
     export interface User {
       id: string;
@@ -15,6 +21,7 @@ export namespace Cumulonimbus {
       bannedAt?: string;
       createdAt: string;
       updatedAt: string;
+      ratelimit: RateLimitData;
     }
 
     export interface Session {
@@ -22,21 +29,25 @@ export namespace Cumulonimbus {
       exp: number;
       sub: string;
       name: string;
+      ratelimit: RateLimitData;
     }
 
     export interface List<T> {
       count: number;
       items: T[];
+      ratelimit: RateLimitData;
     }
 
     export interface Success {
       code: string;
       message?: string;
+      ratelimit: RateLimitData;
     }
 
     export interface DeleteBulk {
       count: number;
       type: 'user' | 'session' | 'file' | 'domain' | 'instruction';
+      ratelimit: RateLimitData;
     }
 
     export interface Instruction {
@@ -48,6 +59,7 @@ export namespace Cumulonimbus {
       displayName: string;
       createdAt: string;
       updatedAt: string;
+      ratelimit: RateLimitData;
     }
 
     export interface Domain {
@@ -55,16 +67,19 @@ export namespace Cumulonimbus {
       allowsSubdomains: boolean;
       createdAt: string;
       updatedAt: string;
+      ratelimit: RateLimitData;
     }
 
     export interface Error {
       code: string;
       message: string;
+      ratelimit: RateLimitData;
     }
 
     export interface SuccessfulAuth {
       token: string;
       exp: number;
+      ratelimit: RateLimitData;
     }
 
     export interface File {
@@ -73,16 +88,19 @@ export namespace Cumulonimbus {
       updatedAt: string;
       userID: string;
       size: number;
+      ratelimit: RateLimitData;
     }
 
     export interface SuccessfulUpload {
       url: string;
       thumbnail: string;
       manage: string;
+      ratelimit: RateLimitData;
     }
   }
 
   export class ResponseError extends Error implements Data.Error {
+    public ratelimit: RateLimitData;
     public code: string;
     public message: string;
     public fields?: string[]; // Present only when code is 'MISSING_FIELDS_ERROR'

@@ -24,10 +24,25 @@ export default async function call<T>(
 
   let json: T = await res.json();
   if (res.ok) {
-    return { res, payload: json };
+    return {
+      res,
+      payload: {
+        ...json,
+        ratelimit: {
+          maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
+          remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
+          resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
+        }
+      }
+    };
   } else {
-    throw new Cumulonimbus.ResponseError(
-      json as unknown as Cumulonimbus.Data.Error
-    );
+    throw new Cumulonimbus.ResponseError({
+      ...(json as unknown as Cumulonimbus.Data.Error),
+      ratelimit: {
+        maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
+        remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
+        resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
+      }
+    });
   }
 }
