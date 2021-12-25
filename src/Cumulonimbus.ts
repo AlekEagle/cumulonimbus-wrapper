@@ -1,5 +1,5 @@
 export namespace Cumulonimbus {
-  export const BASE_URL = 'http://localhost:8000/api';
+  export const BASE_URL = 'https://localhost/api';
 
   export const VERSION = 'v1.0.0';
 

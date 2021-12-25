@@ -21,23 +21,34 @@ export default async function call<T>(
     'User-Agent'
   ] = `Cumulonimbus-Wrapper: ${Cumulonimbus.VERSION}`;
   let res: Response = await fetchFun(Cumulonimbus.BASE_URL + url, opts);
-
-  let json: T = await res.json();
-  if (res.ok) {
-    return {
-      res,
-      payload: {
-        ...json,
+  try {
+    let json: T = await res.json();
+    if (res.ok) {
+      return {
+        res,
+        payload: {
+          ...json,
+          ratelimit: {
+            maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
+            remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
+            resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
+          }
+        }
+      };
+    } else {
+      throw new Cumulonimbus.ResponseError({
+        ...(json as unknown as Cumulonimbus.Data.Error),
         ratelimit: {
           maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
           remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
           resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
         }
-      }
-    };
-  } else {
+      });
+    }
+  } catch (error) {
     throw new Cumulonimbus.ResponseError({
-      ...(json as unknown as Cumulonimbus.Data.Error),
+      code: 'GENERIC_ERROR',
+      message: null,
       ratelimit: {
         maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
         remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
