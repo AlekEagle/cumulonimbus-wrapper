@@ -21,6 +21,19 @@ export default async function call<T>(
     'User-Agent'
   ] = `Cumulonimbus-Wrapper: ${Cumulonimbus.VERSION}`;
   let res: Response = await fetchFun(Cumulonimbus.BASE_URL + url, opts);
+
+  if (res.status === 413) {
+    throw new Cumulonimbus.ResponseError({
+      code: 'BODY_TOO_LARGE_ERROR',
+      message: 'Request Body Too Large',
+      ratelimit: {
+        maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
+        remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
+        resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
+      }
+    });
+  }
+
   try {
     let json: T = await res.json();
     if (res.ok) {
