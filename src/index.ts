@@ -209,7 +209,9 @@ export class Client {
   public getAllSelfFiles = this.manufactureMethodGet<
     [number | null, number | null],
     __Cumulonimbus.Data.List<__Cumulonimbus.Data.File>
-  >((limit, offset) => `/user/files?limit=${limit}&offset=${offset}`);
+  >(
+    (limit, offset) => `/user/files?limit=${limit || 50}&offset=${offset || 0}`
+  );
 
   public getSelfFileByID = this.manufactureMethodGet<
     [string],
