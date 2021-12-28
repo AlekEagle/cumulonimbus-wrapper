@@ -59,14 +59,16 @@ export default async function call<T>(
       });
     }
   } catch (error) {
-    throw new Cumulonimbus.ResponseError({
-      code: 'GENERIC_ERROR',
-      message: null,
-      ratelimit: {
-        maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
-        remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
-        resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
-      }
-    });
+    if (error instanceof Cumulonimbus.ResponseError) throw error;
+    else
+      throw new Cumulonimbus.ResponseError({
+        code: 'GENERIC_ERROR',
+        message: null,
+        ratelimit: {
+          maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
+          remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
+          resetsAt: Number(res.headers.get('X-RateLimit-Reset'))
+        }
+      });
   }
 }
