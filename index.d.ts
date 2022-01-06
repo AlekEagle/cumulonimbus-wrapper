@@ -152,11 +152,11 @@ export class Client {
     domain: string,
     subdomain?: string
   ): Promise<Cumulonimbus.Data.User>;
-  public getAllDomains(
+  public getDomains(
     limit?: number,
     offset?: number
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>>;
-  public getAllSelfFiles(
+  public getSelfFiles(
     limit?: number,
     offset?: number
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
@@ -165,8 +165,8 @@ export class Client {
   public bulkDeleteSelfFilesByID(
     files: string[]
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public BulkDeleteAllSelfFiles(): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public getAllInstructions(
+  public BulkDeleteSelfFiles(): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public getInstructions(
     limit?: number,
     offset?: number
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>>;
@@ -186,7 +186,7 @@ export class Client {
   public bulkDeleteUsersByID(
     users: string[]
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public createNewDomain(
+  public createDomain(
     domain: string,
     allowsSubdomains: boolean
   ): Promise<Cumulonimbus.Data.Domain>;
@@ -198,11 +198,11 @@ export class Client {
   public bulkDeleteDomainsByID(
     domains: string[]
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public getAllFiles(
+  public getFiles(
     limit?: number,
     offset?: number
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
-  public getAllUserFiles(
+  public getUserFiles(
     userID: string,
     limit?: number,
     offset?: number
@@ -253,7 +253,7 @@ export class Client {
     id: string,
     sessions: string[]
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public bulkDeleteAllUserSessions(
+  public bulkDeleteUserSessions(
     id: string
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
   public uploadData(
