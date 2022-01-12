@@ -182,7 +182,7 @@ export class Client {
   public deleteSelfUser = this.manufactureMethod<
     [string, string],
     __Cumulonimbus.Data.User
-  >('/users', 'DELETE', WITH_BODY, (username, password) =>
+  >('/user', 'DELETE', WITH_BODY, (username, password) =>
     JSON.stringify({ username, password })
   );
 
@@ -244,7 +244,7 @@ export class Client {
   public getInstructionByID = this.manufactureMethodGet<
     [string],
     __Cumulonimbus.Data.Instruction
-  >(id => `/instructions/${id}`);
+  >(id => `/instruction/${id}`);
 
   public getUsers = this.manufactureMethodGet<
     [number | null, number | null],
@@ -285,7 +285,7 @@ export class Client {
   public toggleUserBan = this.manufactureMethod<
     [string],
     __Cumulonimbus.Data.User
-  >(id => `/users/${id}/ban`, 'PATCH', {}, null);
+  >(id => `/user/${id}/ban`, 'PATCH', {}, null);
 
   public deleteUserByID = this.manufactureMethod<
     [string],
