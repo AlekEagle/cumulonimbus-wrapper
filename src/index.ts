@@ -186,7 +186,7 @@ export class Client {
     JSON.stringify({ username, password })
   );
 
-  public updateSelfDomain = this.manufactureMethod<
+  public editSelfDomain = this.manufactureMethod<
     [string, string | null],
     __Cumulonimbus.Data.User
   >(
@@ -309,7 +309,7 @@ export class Client {
     JSON.stringify({ domain, allowsSubdomains })
   );
 
-  public updateDomainByID = this.manufactureMethod<
+  public editDomainByID = this.manufactureMethod<
     [string, boolean],
     __Cumulonimbus.Data.Domain
   >(
@@ -375,7 +375,7 @@ export class Client {
       })
   );
 
-  public updateInstructionByID = this.manufactureMethod<
+  public editInstructionByID = this.manufactureMethod<
     [
       string,
       {

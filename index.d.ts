@@ -148,7 +148,7 @@ export class Client {
     username: string,
     password: string
   ): Promise<Cumulonimbus.Data.User>;
-  public updateSelfDomain(
+  public editSelfDomain(
     domain: string,
     subdomain?: string
   ): Promise<Cumulonimbus.Data.User>;
@@ -190,7 +190,7 @@ export class Client {
     domain: string,
     allowsSubdomains: boolean
   ): Promise<Cumulonimbus.Data.Domain>;
-  public updateDomainByID(
+  public editDomainByID(
     id: string,
     allowsSubdomains: boolean
   ): Promise<Cumulonimbus.Data.Domain>;
@@ -220,7 +220,7 @@ export class Client {
     description: string,
     displayName: string
   ): Promise<Cumulonimbus.Data.Instruction>;
-  public updateInstructionByID(
+  public editInstructionByID(
     id: string,
     newContent: {
       steps?: string[];
