@@ -228,7 +228,7 @@ export class Client {
     __Cumulonimbus.Data.DeleteBulk
   >('/user/files', 'DELETE', WITH_BODY, files => JSON.stringify({ files }));
 
-  public bulkDeleteSelfFiles = this.manufactureMethod<
+  public bulkDeleteAllSelfFiles = this.manufactureMethod<
     [],
     __Cumulonimbus.Data.DeleteBulk
   >('/user/files/all', 'DELETE', {}, null);

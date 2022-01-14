@@ -165,7 +165,7 @@ export class Client {
   public bulkDeleteSelfFilesByID(
     files: string[]
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public BulkDeleteSelfFiles(): Promise<Cumulonimbus.Data.DeleteBulk>;
+  public BulkDeleteAllSelfFiles(): Promise<Cumulonimbus.Data.DeleteBulk>;
   public getInstructions(
     limit?: number,
     offset?: number
