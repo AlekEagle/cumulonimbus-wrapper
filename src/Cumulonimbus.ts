@@ -1,7 +1,7 @@
 export namespace Cumulonimbus {
-  export const BASE_URL = "https://alekeagle.me/api";
+  export const BASE_URL = 'https://alekeagle.me/api';
 
-  export const VERSION = "v1.0.1";
+  export const VERSION = 'v1.0.2';
 
   export interface RateLimitData {
     maxRequests: number;
@@ -46,7 +46,7 @@ export namespace Cumulonimbus {
 
     export interface DeleteBulk {
       count: number;
-      type: "user" | "session" | "file" | "domain" | "instruction";
+      type: 'user' | 'session' | 'file' | 'domain' | 'instruction';
       ratelimit: RateLimitData;
     }
 
