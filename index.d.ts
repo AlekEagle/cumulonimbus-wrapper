@@ -123,15 +123,17 @@ export class Client {
   public static login(
     user: string,
     pass: string,
-    rememberMe: boolean
+    rememberMe: boolean,
+    options?: Cumulonimbus.ClientOptions
   ): Promise<Client>;
   public static createAccount(
     username: string,
     password: string,
     email: string,
-    rememberMe: boolean
+    rememberMe: boolean,
+    options?: Cumulonimbus.ClientOptions
   ): Promise<Client>;
-  constructor(token: string);
+  constructor(token: string, options?: Cumulonimbus.ClientOptions);
   private authenticatedCall<T>(
     url: string,
     options: RequestInit
