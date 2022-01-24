@@ -13,7 +13,7 @@ let fetchFun: Function;
 
 export default async function call<T>(
   url: string,
-  options: RequestInit = { headers: {} }
+  options: Cumulonimbus.APICallRequestInit = { headers: {} }
 ) {
   try {
     let opts = Object.assign(Object.create(null), options);
@@ -21,7 +21,10 @@ export default async function call<T>(
     (opts.headers as any)[
       'User-Agent'
     ] = `Cumulonimbus-Wrapper: ${Cumulonimbus.VERSION}`;
-    let res: Response = await fetchFun(Cumulonimbus.BASE_URL + url, opts);
+    let res: Response = await fetchFun(
+      options.baseURL || Cumulonimbus.BASE_URL + url,
+      opts
+    );
 
     if (res.status === 413) {
       throw new Cumulonimbus.ResponseError({

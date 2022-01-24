@@ -9,6 +9,8 @@ export const Cumulonimbus = __Cumulonimbus;
 export class Client {
   private token: string;
 
+  private options: __Cumulonimbus.ClientOptions;
+
   /// why spend 6 minutes implementing everything by hand when we can spend 6 hours trying to automate it
   private manufactureMethod<T extends any[], M>(
     endpointTemplate: string | ((...args: T) => string),
@@ -51,7 +53,8 @@ export class Client {
   public static async login(
     user: string,
     pass: string,
-    rememberMe: boolean = false
+    rememberMe: boolean = false,
+    options?: __Cumulonimbus.ClientOptions
   ): Promise<Client> {
     try {
       let res = await call<__Cumulonimbus.Data.SuccessfulAuth>(
@@ -61,12 +64,13 @@ export class Client {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ user, pass, rememberMe })
+          body: JSON.stringify({ user, pass, rememberMe }),
+          baseURL: options && options.baseURL ? options.baseURL : undefined
         }
       );
 
       if (res.res.status === 201) {
-        let rtn = new Client(res.payload.token);
+        let rtn = new Client(res.payload.token, options);
         return rtn;
       } else {
         throw new Error('https://youtu.be/snKJPEVbQoE?t=20');
@@ -80,7 +84,8 @@ export class Client {
     username: string,
     password: string,
     email: string,
-    rememberMe: boolean = false
+    rememberMe: boolean = false,
+    options?: __Cumulonimbus.ClientOptions
   ) {
     try {
       let res = await call<__Cumulonimbus.Data.SuccessfulAuth>('/user', {
@@ -94,11 +99,12 @@ export class Client {
           email,
           repeatPassword: password,
           rememberMe
-        })
+        }),
+        baseURL: options && options.baseURL ? options.baseURL : undefined
       });
 
       if (res.res.ok) {
-        let rtn = new Client(res.payload.token);
+        let rtn = new Client(res.payload.token, options);
         return rtn;
       } else throw new Error('https://youtu.be/snKJPEVbQoE?t=20');
     } catch (error) {
@@ -106,7 +112,8 @@ export class Client {
     }
   }
 
-  public constructor(token: string) {
+  public constructor(token: string, options?: __Cumulonimbus.ClientOptions) {
+    this.options = options || {};
     this.token = token;
   }
 
@@ -116,6 +123,7 @@ export class Client {
   ): Promise<{ res: Response; payload: T }> {
     let opts = Object.assign(Object.create(null), options);
     if (!opts.headers) opts.headers = {};
+    opts.baseURL = this.options.baseURL;
     (opts.headers as any).Authorization = this.token;
     try {
       let authedCall = await call<T>(url, opts);

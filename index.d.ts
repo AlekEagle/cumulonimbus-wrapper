@@ -9,6 +9,14 @@ export namespace Cumulonimbus {
     resetsAt: number;
   }
 
+  export interface ClientOptions {
+    baseURL?: string;
+  }
+
+  export interface APICallRequestInit extends RequestInit {
+    baseURL?: string;
+  }
+
   export namespace Data {
     export interface User {
       id: string;
@@ -111,6 +119,7 @@ export namespace Cumulonimbus {
 
 export class Client {
   private token: string;
+  private options: Cumulonimbus.ClientOptions;
   public static login(
     user: string,
     pass: string,
