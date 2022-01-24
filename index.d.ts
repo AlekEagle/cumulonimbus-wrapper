@@ -266,6 +266,7 @@ export class Client {
     id: string
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
   public uploadData(
-    file: Buffer | ArrayBuffer | Blob | File
+    file: Buffer | ArrayBuffer | Blob | File,
+    filename?: string
   ): Promise<Cumulonimbus.Data.SuccessfulUpload>;
 }

@@ -454,9 +454,9 @@ export class Client {
   >(id => `/user/${id}/sessions/all`, 'DELETE', {}, null);
 
   public uploadData = this.manufactureMethod<
-    [Buffer | ArrayBuffer | Blob | File],
+    [Buffer | ArrayBuffer | Blob | File, string | undefined],
     __Cumulonimbus.Data.SuccessfulUpload
-  >('/upload', 'POST', {}, file => toFormData(file));
+  >('/upload', 'POST', {}, (file, filename) => toFormData(file, filename));
 }
 
 export default {

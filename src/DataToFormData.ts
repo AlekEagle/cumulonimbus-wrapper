@@ -11,7 +11,10 @@ let isBrowser = false;
   }
 })();
 
-export default function toFormData(data: Buffer | ArrayBuffer | File | Blob) {
+export default function toFormData(
+  data: Buffer | ArrayBuffer | File | Blob,
+  filename: string = 'thing'
+) {
   const FormDataBody = new formData();
   if (isBrowser) {
     if (data instanceof File) {
@@ -19,17 +22,17 @@ export default function toFormData(data: Buffer | ArrayBuffer | File | Blob) {
       return FormDataBody;
     }
     if (data instanceof ArrayBuffer) {
-      let leFile = new File([data], 'thing');
+      let leFile = new File([data], filename);
       FormDataBody.append('file', leFile);
       return FormDataBody;
     }
     if (data instanceof Blob) {
-      let leFile = new File([data], 'thing');
+      let leFile = new File([data], filename);
       FormDataBody.append('file', leFile);
       return FormDataBody;
     }
   } else {
-    FormDataBody.append('file', data as any, 'thing');
+    FormDataBody.append('file', data as any, filename);
     return FormDataBody;
   }
 }
