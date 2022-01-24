@@ -22,7 +22,7 @@ export default async function call<T>(
       'User-Agent'
     ] = `Cumulonimbus-Wrapper: ${Cumulonimbus.VERSION}`;
     let res: Response = await fetchFun(
-      options.baseURL || Cumulonimbus.BASE_URL + url,
+      (options.baseURL || Cumulonimbus.BASE_URL) + url,
       opts
     );
 
