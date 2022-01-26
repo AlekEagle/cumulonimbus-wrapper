@@ -47,7 +47,7 @@ export class Client {
   private manufactureMethodGet<T extends any[], M>(
     endpointTemplate: string | ((...args: T) => string)
   ): (this: Client, ...args: T) => Promise<M> {
-    return this.manufactureMethod(endpointTemplate, 'GET', {}, null);
+    return this.manufactureMethod<T, M>(endpointTemplate, 'GET', {}, null);
   }
 
   public static async login(
@@ -127,8 +127,8 @@ export class Client {
     opts.baseURL = this.options.baseURL;
     (opts.headers as any).Authorization = this.token;
     try {
-      let authedCall = await call<T>(url, opts);
-      return authedCall;
+      let authenticatedCall = await call<T>(url, opts);
+      return authenticatedCall;
     } catch (error) {
       throw error;
     }
@@ -136,12 +136,19 @@ export class Client {
 
   public sanityCheck = this.manufactureMethodGet<
     [],
-    {
-      hello: 'world';
-      version: string;
-      ratelimit: __Cumulonimbus.RateLimitData;
-    }
+    __Cumulonimbus.Data.SanityCheck
   >('/');
+
+  public thumbnailSanityCheck = async () => {
+    let res = await call<__Cumulonimbus.Data.SanityCheck>('/', {
+      baseURL: 'https://previews.alekeagle.me'
+    });
+    return { hello: res.payload.hello, version: res.payload.version };
+  };
+
+  public getThumbnail = this.manufactureMethodGet<[string], Buffer>(
+    filename => `/${filename}`
+  );
 
   public getSelfSessionByID = this.manufactureMethodGet<
     [string | null],

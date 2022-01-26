@@ -1,7 +1,7 @@
 export namespace Cumulonimbus {
   export const BASE_URL = 'https://alekeagle.me/api';
 
-  export const VERSION = 'v1.0.8';
+  export const VERSION = 'v1.0.9';
 
   export interface RateLimitData {
     maxRequests: number;
@@ -79,9 +79,31 @@ export namespace Cumulonimbus {
     }
 
     export interface Error {
-      code: string;
-      message: string;
+      code: keyof ErrorCode;
+      message: ErrorCode[keyof ErrorCode];
       ratelimit: RateLimitData;
+    }
+
+    export interface ErrorCode {
+      PERMISSIONS_ERROR: 'Missing Permissions';
+      INVALID_USER_ERROR: 'Invalid User';
+      INVALID_PASSWORD_ERROR: 'Invalid Password';
+      INVALID_SESSION_ERROR: 'Invalid Session';
+      INVALID_DOMAIN_ERROR: 'Invalid Domain';
+      INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain: <subdomain>';
+      INVALID_FILE_ERROR: 'Invalid File';
+      INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
+      INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
+      SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
+      DOMAIN_EXISTS_ERROR: 'Domain Exists';
+      USER_EXISTS_ERROR: 'User Exists';
+      INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
+      MISSING_FIELDS_ERROR: 'Missing Fields: <fields>';
+      BANNED_ERROR: 'Banned';
+      BODY_TOO_LARGE_ERROR: 'Body Too Large';
+      RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
+      INTERNAL_ERROR: 'Internal Server Error';
+      GENERIC_ERROR: '<message>';
     }
 
     export interface SuccessfulAuth {
@@ -105,13 +127,17 @@ export namespace Cumulonimbus {
       manage: string;
       ratelimit: RateLimitData;
     }
+
+    export interface SanityCheck {
+      version: string;
+      hello: 'world';
+      ratelimit?: RateLimitData;
+    }
   }
   export class ResponseError extends Error implements Data.Error {
     public ratelimit: RateLimitData;
-    public code: string;
-    public message: string;
-    public fields?: string[]; // Present only when code is 'MISSING_FIELDS_ERROR'
-    public parsedSubdomain?: string; // Present only when code is 'INVALID_SUBDOMAIN_ERROR'
+    public code: keyof Data.ErrorCode;
+    public message: Data.ErrorCode[typeof this.code];
     constructor(response: Data.Error) {
       super();
 

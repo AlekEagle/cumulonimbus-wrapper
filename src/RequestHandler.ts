@@ -29,7 +29,7 @@ export default async function call<T>(
     if (res.status === 413) {
       throw new Cumulonimbus.ResponseError({
         code: 'BODY_TOO_LARGE_ERROR',
-        message: 'Request Body Too Large',
+        message: 'Body Too Large',
         ratelimit: {
           maxRequests: Number(res.headers.get('X-RateLimit-Limit')),
           remainingRequests: Number(res.headers.get('X-RateLimit-Remaining')),
