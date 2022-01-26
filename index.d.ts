@@ -129,6 +129,7 @@ export class Client {
   public static createAccount(
     username: string,
     password: string,
+    repeatPassword: string,
     email: string,
     rememberMe: boolean,
     options?: Cumulonimbus.ClientOptions
@@ -139,6 +140,11 @@ export class Client {
     options: RequestInit
   ): Promise<{ res: Response; payload: T }>;
   public getSelfSessionByID(sid?: string): Promise<Cumulonimbus.Data.Session>;
+  public sanityCheck(): Promise<{
+    hello: 'world';
+    version: string;
+    ratelimit: Cumulonimbus.RateLimitData;
+  }>;
   public getSelfSessions(
     limit?: number,
     offset?: number

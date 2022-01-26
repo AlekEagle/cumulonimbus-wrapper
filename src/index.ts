@@ -83,6 +83,7 @@ export class Client {
   public static async createAccount(
     username: string,
     password: string,
+    repeatPassword: string,
     email: string,
     rememberMe: boolean = false,
     options?: __Cumulonimbus.ClientOptions
@@ -97,7 +98,7 @@ export class Client {
           username,
           password,
           email,
-          repeatPassword: password,
+          repeatPassword,
           rememberMe
         }),
         baseURL: options && options.baseURL ? options.baseURL : undefined
@@ -132,6 +133,15 @@ export class Client {
       throw error;
     }
   }
+
+  public sanityCheck = this.manufactureMethodGet<
+    [],
+    {
+      hello: 'world';
+      version: string;
+      ratelimit: __Cumulonimbus.RateLimitData;
+    }
+  >('/');
 
   public getSelfSessionByID = this.manufactureMethodGet<
     [string | null],
