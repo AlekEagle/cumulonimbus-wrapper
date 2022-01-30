@@ -168,7 +168,7 @@ export class Client {
   public getSelfSessionByID(sid?: string): Promise<Cumulonimbus.Data.Session>;
   public sanityCheck(): Promise<Cumulonimbus.Data.SanityCheck>;
   public thumbnailSanityCheck(): Promise<Cumulonimbus.Data.SanityCheck>;
-  public getThumbnail(filename: string): Promise<Buffer>;
+  public getThumbnail(filename: string): Promise<ArrayBuffer>;
   public getSelfSessions(
     limit?: number,
     offset?: number

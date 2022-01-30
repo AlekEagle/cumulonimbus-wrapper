@@ -1,7 +1,7 @@
 export namespace Cumulonimbus {
   export const BASE_URL = 'https://alekeagle.me/api';
 
-  export const VERSION = 'v1.0.9';
+  export const VERSION = 'v1.0.10';
 
   export interface RateLimitData {
     maxRequests: number;
@@ -11,6 +11,7 @@ export namespace Cumulonimbus {
 
   export interface ClientOptions {
     baseURL?: string;
+    baseThumbnailURL?: string;
   }
 
   export interface APICallRequestInit extends RequestInit {

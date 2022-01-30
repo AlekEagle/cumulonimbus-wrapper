@@ -141,14 +141,19 @@ export class Client {
 
   public thumbnailSanityCheck = async () => {
     let res = await call<__Cumulonimbus.Data.SanityCheck>('/', {
-      baseURL: 'https://previews.alekeagle.me'
+      baseURL: this.options.baseThumbnailURL || 'https://previews.alekeagle.me'
     });
     return { hello: res.payload.hello, version: res.payload.version };
   };
 
-  public getThumbnail = this.manufactureMethodGet<[string], Buffer>(
-    filename => `/${filename}`
-  );
+  public getThumbnail = async (filename: string) => {
+    let res = await fetch(
+      `${
+        this.options.baseThumbnailURL || 'https://previews.alekeagle.me'
+      }/${filename}`
+    );
+    return await res.arrayBuffer();
+  };
 
   public getSelfSessionByID = this.manufactureMethodGet<
     [string | null],
