@@ -11,6 +11,7 @@ export namespace Cumulonimbus {
 
   export interface ClientOptions {
     baseURL?: string;
+    baseThumbnailURL?: string;
   }
 
   export interface APICallRequestInit extends RequestInit {
