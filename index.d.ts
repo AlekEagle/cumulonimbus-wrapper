@@ -213,6 +213,10 @@ export class Client {
     offset?: number
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>>;
   public getInstructionByID(id: string): Promise<Cumulonimbus.Data.Instruction>;
+  public getUsers(
+    limit?: number,
+    offset?: number
+  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.User>>;
   public getUserByID(id: string): Promise<Cumulonimbus.Data.User>;
   public editUserByID(
     id: string,
