@@ -382,6 +382,11 @@ export class Client {
     __Cumulonimbus.Data.File
   >(fileID => `/file/${fileID}`, 'DELETE', {}, null);
 
+  public bulkDeleteAllUserFiles = this.manufactureMethod<
+    [string],
+    __Cumulonimbus.Data.DeleteBulk
+  >(userID => `/user/${userID}/files/all`, 'DELETE', {}, null);
+
   public bulkDeleteFilesByID = this.manufactureMethod<
     [string[]],
     __Cumulonimbus.Data.DeleteBulk

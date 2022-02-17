@@ -255,6 +255,9 @@ export class Client {
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
   public getFileByID(fileID: string): Promise<Cumulonimbus.Data.File>;
   public deleteFileByID(fileID: string): Promise<Cumulonimbus.Data.File>;
+  public bulkDeleteAllUserFiles(
+    userID: string
+  ): Promise<Cumulonimbus.Data.DeleteBulk>;
   public bulkDeleteFilesByID(
     files: string[]
   ): Promise<Cumulonimbus.Data.DeleteBulk>;
