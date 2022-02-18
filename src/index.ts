@@ -393,7 +393,7 @@ export class Client {
   >('/files', 'DELETE', WITH_BODY, files => JSON.stringify({ files }));
 
   public createInstruction = this.manufactureMethod<
-    [string, string[], string, string, string, string],
+    [string, string[], string | null, string, string, string],
     __Cumulonimbus.Data.Instruction
   >(
     '/instruction',
@@ -415,7 +415,7 @@ export class Client {
       string,
       {
         steps?: string[];
-        filename?: string;
+        filename?: string | null;
         fileContent?: string;
         description?: string;
         displayName?: string;

@@ -264,7 +264,7 @@ export class Client {
   public createInstruction(
     name: string,
     steps: string[],
-    filename: string,
+    filename: string | null,
     fileContent: string,
     description: string,
     displayName: string
@@ -273,7 +273,7 @@ export class Client {
     id: string,
     newContent: {
       steps?: string[];
-      filename?: string;
+      filename?: string | null;
       fileContent?: string;
       description?: string;
       displayName?: string;
