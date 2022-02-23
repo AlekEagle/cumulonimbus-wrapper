@@ -24,7 +24,7 @@ export namespace Cumulonimbus {
       username: string;
       displayName: string;
       email: string;
-      staff?: string;
+      staff: boolean;
       domain: string;
       subdomain?: string;
       bannedAt?: string;
