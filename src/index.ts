@@ -287,14 +287,17 @@ export class Client {
   >(id => `/user/${id}`);
 
   public editUserByID = this.manufactureMethod<
-    [string, { username?: string; password?: string; email?: string }],
+    [
+      string,
+      { username?: string; password?: string; email?: string; staff?: boolean }
+    ],
     __Cumulonimbus.Data.User
   >(
     id => `/user/${id}`,
     'PATCH',
     WITH_BODY,
     (id, newContent) => {
-      let payload: { [key: string]: string } = {};
+      let payload: { [key: string]: string | boolean } = {};
       Object.entries(newContent).forEach(a => {
         if (a[1]) payload[a[0]] = a[1];
       });

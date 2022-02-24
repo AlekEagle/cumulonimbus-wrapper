@@ -220,7 +220,12 @@ export class Client {
   public getUserByID(id: string): Promise<Cumulonimbus.Data.User>;
   public editUserByID(
     id: string,
-    newContent: { username?: string; password?: string; email?: string }
+    newContent: {
+      username?: string;
+      password?: string;
+      email?: string;
+      staff?: boolean;
+    }
   ): Promise<Cumulonimbus.Data.User>;
   public editUserDomain(
     id: string,
