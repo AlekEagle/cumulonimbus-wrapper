@@ -299,7 +299,7 @@ export class Client {
     (id, newContent) => {
       let payload: { [key: string]: string | boolean } = {};
       Object.entries(newContent).forEach(a => {
-        if (a[1]) payload[a[0]] = a[1];
+        if (a[1] !== null || a[1] !== undefined) payload[a[0]] = a[1];
       });
       return JSON.stringify(payload);
     }
