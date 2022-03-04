@@ -1,15 +1,5 @@
 import { Cumulonimbus } from './Cumulonimbus';
-
-let fetchFun: Function;
-
-(async function () {
-  try {
-    fetchFun = window.fetch;
-  } catch (error) {
-    let a = await import('node-fetch');
-    fetchFun = a.default;
-  }
-})();
+import fetch from 'isomorphic-fetch';
 
 export default async function call<T>(
   url: string,
@@ -21,7 +11,7 @@ export default async function call<T>(
     (opts.headers as any)[
       'User-Agent'
     ] = `Cumulonimbus-Wrapper: ${Cumulonimbus.VERSION}`;
-    let res: Response = await fetchFun(
+    let res: Response = await fetch(
       (options.baseURL || Cumulonimbus.BASE_URL) + url,
       opts
     );

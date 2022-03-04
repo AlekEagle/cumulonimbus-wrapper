@@ -1,13 +1,11 @@
-let formData: typeof FormData;
+import formData from 'isomorphic-form-data';
 let isBrowser = false;
 
 (async function () {
   try {
-    formData = window.FormData as any;
     isBrowser = true;
   } catch (error) {
     let a = await import('form-data');
-    formData = a.default as any;
   }
 })();
 
