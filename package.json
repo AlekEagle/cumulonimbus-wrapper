@@ -1,6 +1,6 @@
 {
   "name": "cumulonimbus-wrapper",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "A wrapper for the Cumulonimbus API.",
   "main": "dist/index.js",
   "scripts": {
@@ -26,6 +26,7 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "form-data": "^4.0.0"
+    "form-data": "^4.0.0",
+    "node-fetch": "^3.2.1"
   }
 }
