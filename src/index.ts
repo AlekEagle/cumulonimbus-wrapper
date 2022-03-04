@@ -16,10 +16,7 @@ export class Client {
     endpointTemplate: string | ((...args: T) => string),
     method: string,
     headers: { [key: string]: string },
-    bodyTemplate:
-      | string
-      | null
-      | ((...args: T) => string | ReturnType<typeof toFormData> | null)
+    bodyTemplate: string | null | ((...args: T) => any)
   ): (...args: T) => Promise<M> {
     return async (...args: T): Promise<M> => {
       try {
