@@ -4,8 +4,9 @@ let isBrowser = false;
 (async function () {
   try {
     isBrowser = true;
+    let funny = window.FormData;
   } catch (error) {
-    let a = await import('form-data');
+    isBrowser = false;
   }
 })();
 
