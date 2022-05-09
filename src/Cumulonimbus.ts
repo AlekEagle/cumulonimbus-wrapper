@@ -86,7 +86,7 @@ export namespace Cumulonimbus {
     }
 
     export interface ErrorCode {
-      PERMISSIONS_ERROR: 'Missing Permissions';
+      INSUFFICIENT_PERMISSIONS_ERROR: 'Missing Permissions';
       INVALID_USER_ERROR: 'Invalid User';
       INVALID_PASSWORD_ERROR: 'Invalid Password';
       INVALID_SESSION_ERROR: 'Invalid Session';
