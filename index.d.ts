@@ -79,6 +79,12 @@ export namespace Cumulonimbus {
       ratelimit: RateLimitData;
     }
 
+    export interface DomainSlim {
+      domain: string;
+      allowsSubdomains: boolean;
+      ratelimit: RateLimitData;
+    }
+
     export interface Error {
       code: keyof ErrorCode;
       message: ErrorCode[keyof ErrorCode];
@@ -198,6 +204,9 @@ export class Client {
     limit?: number,
     offset?: number
   ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>>;
+  public getDomainsSlim(): Promise<
+    Cumulonimbus.Data.List<Cumulonimbus.Data.DomainSlim>
+  >;
   public getSelfFiles(
     limit?: number,
     offset?: number

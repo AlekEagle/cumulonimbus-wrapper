@@ -228,6 +228,11 @@ export class Client {
     __Cumulonimbus.Data.List<__Cumulonimbus.Data.Domain>
   >((limit, offset) => `/domains?limit=${limit || 50}&offset=${offset || 0}`);
 
+  public getDomainsSlim = this.manufactureMethodGet<
+    [],
+    __Cumulonimbus.Data.List<__Cumulonimbus.Data.DomainSlim>
+  >('/domains/slim');
+
   public getDomainByID = this.manufactureMethodGet<
     [string],
     __Cumulonimbus.Data.Domain
