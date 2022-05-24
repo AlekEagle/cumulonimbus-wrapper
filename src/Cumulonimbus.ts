@@ -1,7 +1,7 @@
 export namespace Cumulonimbus {
-  export const BASE_URL = 'https://alekeagle.me/api';
+  export const BASE_URL = "https://alekeagle.me/api";
 
-  export const VERSION = 'v1.1.0';
+  export const VERSION = "v1.2.0";
 
   export interface RateLimitData {
     maxRequests: number;
@@ -22,7 +22,6 @@ export namespace Cumulonimbus {
     export interface User {
       id: string;
       username: string;
-      displayName: string;
       email: string;
       staff?: string;
       domain: string;
@@ -55,7 +54,7 @@ export namespace Cumulonimbus {
 
     export interface DeleteBulk {
       count: number;
-      type: 'user' | 'session' | 'file' | 'domain' | 'instruction';
+      type: "user" | "session" | "file" | "domain" | "instruction";
       ratelimit: RateLimitData;
     }
 
@@ -92,25 +91,25 @@ export namespace Cumulonimbus {
     }
 
     export interface ErrorCode {
-      INSUFFICIENT_PERMISSIONS_ERROR: 'Missing Permissions';
-      INVALID_USER_ERROR: 'Invalid User';
-      INVALID_PASSWORD_ERROR: 'Invalid Password';
-      INVALID_SESSION_ERROR: 'Invalid Session';
-      INVALID_DOMAIN_ERROR: 'Invalid Domain';
-      INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain: <subdomain>';
-      INVALID_FILE_ERROR: 'Invalid File';
-      INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
-      INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
-      SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
-      DOMAIN_EXISTS_ERROR: 'Domain Exists';
-      USER_EXISTS_ERROR: 'User Exists';
-      INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
-      MISSING_FIELDS_ERROR: 'Missing Fields: <fields>';
-      BANNED_ERROR: 'Banned';
-      BODY_TOO_LARGE_ERROR: 'Body Too Large';
-      RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
-      INTERNAL_ERROR: 'Internal Server Error';
-      GENERIC_ERROR: '<message>';
+      INSUFFICIENT_PERMISSIONS_ERROR: "Missing Permissions";
+      INVALID_USER_ERROR: "Invalid User";
+      INVALID_PASSWORD_ERROR: "Invalid Password";
+      INVALID_SESSION_ERROR: "Invalid Session";
+      INVALID_DOMAIN_ERROR: "Invalid Domain";
+      INVALID_SUBDOMAIN_ERROR: "Invalid Subdomain: <subdomain>";
+      INVALID_FILE_ERROR: "Invalid File";
+      INVALID_INSTRUCTION_ERROR: "Invalid Instruction";
+      INVALID_ENDPOINT_ERROR: "Invalid Endpoint";
+      SUBDOMAIN_NOT_SUPPORTED_ERROR: "Subdomain Not Supported";
+      DOMAIN_EXISTS_ERROR: "Domain Exists";
+      USER_EXISTS_ERROR: "User Exists";
+      INSTRUCTION_EXISTS_ERROR: "Instruction Exists";
+      MISSING_FIELDS_ERROR: "Missing Fields: <fields>";
+      BANNED_ERROR: "Banned";
+      BODY_TOO_LARGE_ERROR: "Body Too Large";
+      RATELIMITED_ERROR: "You Have Been Ratelimited. Please Try Again Later.";
+      INTERNAL_ERROR: "Internal Server Error";
+      GENERIC_ERROR: "<message>";
     }
 
     export interface SuccessfulAuth {
@@ -137,7 +136,7 @@ export namespace Cumulonimbus {
 
     export interface SanityCheck {
       version: string;
-      hello: 'world';
+      hello: "world";
       ratelimit?: RateLimitData;
     }
   }

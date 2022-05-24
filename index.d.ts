@@ -22,7 +22,6 @@ export namespace Cumulonimbus {
     export interface User {
       id: string;
       username: string;
-      displayName: string;
       email: string;
       staff: boolean;
       domain: string;
