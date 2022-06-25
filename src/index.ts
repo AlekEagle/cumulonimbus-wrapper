@@ -1,8 +1,8 @@
 import fetch from "isomorphic-fetch";
-import FormData from "isomorphic-form-data";
+import toFormData from "./isomorphicFormData";
 
 // Get version from package.json
-const version = require("./package.json").version;
+const version = require("../package.json").version;
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -39,7 +39,7 @@ class Cumulonimbus {
     });
 
     const res = await fetch(
-      (options.baseURL || this.options.baseURL) + url,
+      (options.baseURL || this.options.baseURL || Cumulonimbus.BASE_URL) + url,
       opts
     );
 
@@ -87,7 +87,7 @@ class Cumulonimbus {
   ) {
     const opts = merge(options, {
       headers: {
-        Authorization: `Bearer ${this.token}`,
+        Authorization: this.token,
       },
     });
     return this.call<T>(url, opts);
@@ -129,20 +129,49 @@ class Cumulonimbus {
     return this.manufactureMethod<T, M>(endpointTemplate, "GET", headers, null);
   }
 
+  private toQueryString(params: {
+    [key: string]: string | number | boolean;
+  }): string {
+    if (
+      Object.entries(params).filter(
+        ([key, value]) => value !== null && value !== "" && value !== undefined
+      ).length === 0
+    )
+      return "";
+    else
+      return (
+        "?" +
+        Object.entries(params)
+          .filter(
+            ([key, value]) =>
+              value !== null && value !== "" && value !== undefined
+          )
+          .map(
+            ([key, value]) =>
+              `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+          )
+          .join("&")
+      );
+  }
+
   public static async login(
     user: string,
     pass: string,
     rememberMe: boolean = false,
-    options?: Cumulonimbus.ClientOptions
+    options?: Cumulonimbus.ClientOptions,
+    tokenName?: string
   ): Promise<Cumulonimbus> {
+    const headers: { [key: string]: string } = {
+      "Content-Type": "application/json",
+      "User-Agent": `Cumulonimbus-Wrapper/${version}`,
+    };
+    if (tokenName) headers["X-Token-Name"] = tokenName;
     const res = await fetch(
-      options && options.baseURL ? options.baseURL : Cumulonimbus.BASE_URL,
+      (options && options.baseURL ? options.baseURL : Cumulonimbus.BASE_URL) +
+        "/user/session",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": `Cumulonimbus/${version}`,
-        },
+        headers,
         body: JSON.stringify({
           user,
           pass,
@@ -174,16 +203,20 @@ class Cumulonimbus {
     password: string,
     confirmPassword: string,
     rememberMe: boolean = false,
-    options?: Cumulonimbus.ClientOptions
+    options?: Cumulonimbus.ClientOptions,
+    tokenName?: string
   ): Promise<Cumulonimbus> {
+    const headers: { [key: string]: string } = {
+      "Content-Type": "application/json",
+      "User-Agent": `Cumulonimbus-Wrapper/${version}`,
+    };
+    if (tokenName) headers["X-Token-Name"] = tokenName;
     const res = await fetch(
-      options && options.baseURL ? options.baseURL : Cumulonimbus.BASE_URL,
+      (options && options.baseURL ? options.baseURL : Cumulonimbus.BASE_URL) +
+        "/user",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": `Cumulonimbus/${version}`,
-        },
+        headers,
         body: JSON.stringify({
           username,
           email,
@@ -210,10 +243,399 @@ class Cumulonimbus {
 
     return new Cumulonimbus(json.token, options);
   }
+
+  public static async apiSanity(
+    baseURL?: string
+  ): Promise<Cumulonimbus.Data.SanityCheck> {
+    const res = await fetch(baseURL || Cumulonimbus.BASE_URL);
+    if (!res.ok)
+      throw new Cumulonimbus.ResponseError({
+        code: "GENERIC_ERROR",
+        message: undefined,
+      });
+    else {
+      const json = await res.json();
+      return {
+        ...json,
+      };
+    }
+  }
+
+  public static async thumbnailSanity(
+    baseThumbURL?: string
+  ): Promise<Cumulonimbus.Data.SanityCheck> {
+    const res = await fetch(baseThumbURL || Cumulonimbus.BASE_THUMB_URL);
+    if (!res.ok)
+      throw new Cumulonimbus.ResponseError({
+        code: "GENERIC_ERROR",
+        message: undefined,
+      });
+    else {
+      const json = await res.json();
+      return {
+        ...json,
+      };
+    }
+  }
+
+  // Non-administrative methods
+
+  // Session methods
+
+  public getSelfSession = this.manufactureMethodGet<
+    [string | undefined],
+    Cumulonimbus.Data.Session
+  >((sid) => `/user/session${sid ? `/${sid}` : ""}`);
+
+  public getSelfSessions = this.manufactureMethodGet<
+    [number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.Session>
+  >(
+    (limit, offset) => `/user/sessions${this.toQueryString({ limit, offset })}`
+  );
+
+  public deleteSelfSession = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.Session
+  >((sid) => `/user/session/${sid}`, "DELETE");
+
+  public deleteSelfSessions = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >("/user/sessions", "DELETE", {}, (sids) =>
+    JSON.stringify({ sessions: sids })
+  );
+
+  public deleteAllSelfSessions = this.manufactureMethod<
+    [boolean | undefined],
+    Cumulonimbus.Data.DeleteBulk
+  >(
+    (allButSelf) => `/user/sessions/all${this.toQueryString({ allButSelf })}`,
+    "DELETE"
+  );
+
+  // User methods
+
+  public getSelf = this.manufactureMethodGet<[], Cumulonimbus.Data.User>(
+    "/user"
+  );
+
+  public editSelf = this.manufactureMethod<
+    [string, { username?: string; email?: string; newPassword?: string }],
+    Cumulonimbus.Data.User
+  >("/user", "PATCH", {}, (password, data) =>
+    JSON.stringify({ password, ...data })
+  );
+
+  public editSelfDomain = this.manufactureMethod<
+    [string, string | undefined],
+    Cumulonimbus.Data.User
+  >("/user/domain", "PATCH", {}, (domain, subdomain) => {
+    if (subdomain) return JSON.stringify({ domain, subdomain });
+    else return JSON.stringify({ domain });
+  });
+
+  public deleteSelf = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.User
+  >("/user", "DELETE", {}, (username, password) =>
+    JSON.stringify({ username, password })
+  );
+
+  // Domain methods
+
+  public getDomains = this.manufactureMethodGet<
+    [number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>
+  >((limit, offset) => `/domains${this.toQueryString({ limit, offset })}`);
+
+  public getSlimDomains = this.manufactureMethodGet<
+    [],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.DomainSlim>
+  >("/domains/slim");
+
+  public getDomain = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.Domain
+  >((domain) => `/domain/${domain}`);
+
+  // File methods
+
+  public getSelfFiles = this.manufactureMethodGet<
+    [number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.File>
+  >((limit, offset) => `/user/files${this.toQueryString({ limit, offset })}`);
+
+  public getSelfFile = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.File
+  >((file) => `/user/file/${file}`);
+
+  public deleteSelfFile = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.File
+  >((file) => `/user/file/${file}`, "DELETE");
+
+  public deleteSelfFiles = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >("/user/files", "DELETE", {}, (files) => JSON.stringify({ files }));
+
+  public deleteAllSelfFiles = this.manufactureMethod<
+    [],
+    Cumulonimbus.Data.DeleteBulk
+  >("/user/files/all", "DELETE");
+
+  // Instruction methods
+
+  public getInstructions = this.manufactureMethodGet<
+    [number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>
+  >((limit, offset) => `/instructions${this.toQueryString({ limit, offset })}`);
+
+  public getInstruction = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.Instruction
+  >((instruction) => `/instruction/${instruction}`);
+
+  public async upload(
+    file: string | Buffer | File | Blob | ArrayBuffer
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>> {
+    const formData = await toFormData(file);
+    const res =
+      await this.authenticatedCall<Cumulonimbus.Data.SuccessfulUpload>(
+        "/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+    return res;
+  }
+
+  // Administrative methods
+
+  // User methods
+
+  public getUsers = this.manufactureMethodGet<
+    [number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.User>
+  >((limit, offset) => `/users${this.toQueryString({ limit, offset })}`);
+
+  public getUser = this.manufactureMethodGet<[string], Cumulonimbus.Data.User>(
+    (id) => `/user/${id}`
+  );
+
+  public editUser = this.manufactureMethod<
+    [
+      string,
+      { username?: string; email?: string; password?: string; staff?: boolean }
+    ],
+    Cumulonimbus.Data.User
+  >(
+    (id, data) => `/user/${id}`,
+    "PATCH",
+    {},
+    (id, data) => JSON.stringify({ ...data })
+  );
+
+  public editUserDomain = this.manufactureMethod<
+    [string, string, string | undefined],
+    Cumulonimbus.Data.User
+  >(
+    (id, domain, subdomain) => `/user/${id}/domain`,
+    "PATCH",
+    {},
+    (id, domain, subdomain) => {
+      if (subdomain) return JSON.stringify({ domain, subdomain });
+      else return JSON.stringify({ domain });
+    }
+  );
+
+  public toggleUserBan = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.User
+  >((id) => `/user/${id}/ban`, "PATCH");
+
+  public deleteUser = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
+    (id) => `/user/${id}`,
+    "DELETE"
+  );
+
+  public deleteUsers = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >("/users", "DELETE", {}, (ids) => JSON.stringify({ users: ids }));
+
+  // Domain methods
+
+  public createDomain = this.manufactureMethod<
+    [string, boolean | undefined],
+    Cumulonimbus.Data.Domain
+  >("/domain", "POST", {}, (domain, allowsSubdomains) => {
+    if (allowsSubdomains !== undefined)
+      return JSON.stringify({ domain, allowsSubdomains });
+    else return JSON.stringify({ domain });
+  });
+
+  public editDomain = this.manufactureMethod<
+    [string, boolean],
+    Cumulonimbus.Data.Domain
+  >(
+    (domain, allowsSubdomains) => `/domain/${domain}`,
+    "PATCH",
+    {},
+    (domain, allowsSubdomains) => JSON.stringify({ allowsSubdomains })
+  );
+
+  public deleteDomain = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.Domain
+  >((domain) => `/domain/${domain}`, "DELETE");
+
+  public deleteDomains = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >("/domains", "DELETE", {}, (domains) => JSON.stringify({ domains }));
+
+  // File methods
+
+  public getFiles = this.manufactureMethodGet<
+    [number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.File>
+  >((limit, offset) => `/files${this.toQueryString({ limit, offset })}`);
+
+  public getUserFiles = this.manufactureMethodGet<
+    [string, number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.File>
+  >(
+    (user, limit, offset) =>
+      `/user/${user}/files${this.toQueryString({ limit, offset })}`
+  );
+
+  public getFile = this.manufactureMethodGet<[string], Cumulonimbus.Data.File>(
+    (file) => `/file/${file}`
+  );
+
+  public deleteFile = this.manufactureMethod<[string], Cumulonimbus.Data.File>(
+    (file) => `/file/${file}`,
+    "DELETE"
+  );
+
+  public deleteFiles = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >("/files", "DELETE", {}, (files) => JSON.stringify({ files }));
+
+  public deleteAllUserFiles = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.DeleteBulk
+  >((user) => `/user/${user}/files/all`, "DELETE");
+
+  // Instruction methods
+
+  public createInstruction = this.manufactureMethod<
+    [string, string, string, string, string[], string | undefined],
+    Cumulonimbus.Data.Instruction
+  >(
+    "/instruction",
+    "POST",
+    {},
+    (name, displayName, description, configContent, steps, configFilename) => {
+      if (configFilename)
+        return JSON.stringify({
+          name,
+          displayName,
+          description,
+          fileContent: configContent,
+          steps,
+          filename: configFilename,
+        });
+      else
+        return JSON.stringify({
+          name,
+          displayName,
+          description,
+          fileContent: configContent,
+          steps,
+        });
+    }
+  );
+
+  public editInstruction = this.manufactureMethod<
+    [
+      string,
+      {
+        displayName?: string;
+        description?: string;
+        fileContent?: string;
+        steps?: string[];
+        filename?: string;
+      }
+    ],
+    Cumulonimbus.Data.Instruction
+  >(
+    (id, data) => `/instruction/${id}`,
+    "PATCH",
+    {},
+    (id, data) => {
+      if (data.filename)
+        return JSON.stringify({ ...data, filename: data.filename });
+      else return JSON.stringify({ ...data });
+    }
+  );
+
+  public deleteInstruction = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.Instruction
+  >((id) => `/instruction/${id}`, "DELETE");
+
+  public deleteInstructions = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >("/instructions", "DELETE", {}, (ids) =>
+    JSON.stringify({ instructions: ids })
+  );
+
+  // Session methods
+
+  public getUserSessions = this.manufactureMethodGet<
+    [string, number | undefined, number | undefined],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.Session>
+  >(
+    (user, limit, offset) =>
+      `/user/${user}/sessions${this.toQueryString({ limit, offset })}`
+  );
+
+  public getUserSession = this.manufactureMethodGet<
+    [string, string],
+    Cumulonimbus.Data.Session
+  >((user, session) => `/user/${user}/session/${session}`);
+
+  public deleteUserSession = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.Session
+  >((user, session) => `/user/${user}/session/${session}`, "DELETE");
+
+  public deleteUserSessions = this.manufactureMethod<
+    [string, string[]],
+    Cumulonimbus.Data.DeleteBulk
+  >(
+    (user, sessions) => `/user/${user}/sessions`,
+    "DELETE",
+    {},
+    (sessions) => JSON.stringify({ sessions })
+  );
+
+  public deleteAllUserSessions = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.DeleteBulk
+  >((user) => `/user/${user}/sessions/all`, "DELETE");
 }
 
 namespace Cumulonimbus {
   export const BASE_URL = "https://alekeagle.me/api";
+  export const BASE_THUMB_URL = "https://previews.alekeagle.me";
   export const VERSION = version;
 
   export interface RatelimitData {
@@ -229,6 +651,7 @@ namespace Cumulonimbus {
 
   export interface APICallRequestInit extends RequestInit {
     baseURL?: string;
+    baseThumbnailURL?: string;
   }
 
   export interface APIResponse<T> {
@@ -344,14 +767,13 @@ namespace Cumulonimbus {
     GENERIC_ERROR: "<message>";
   }
 
-  // Give
-
   export class ResponseError extends Error implements Data.Error {
     code: keyof ErrorCode;
     message: ErrorCode[keyof ErrorCode];
     ratelimit: RatelimitData | null;
     constructor(response: Data.Error, ratelimit: RatelimitData | null = null) {
       super(response.message);
+      Object.setPrototypeOf(this, ResponseError.prototype);
       this.code = response.code as keyof ErrorCode;
       this.message = response.message as ErrorCode[keyof ErrorCode];
       this.ratelimit = ratelimit;
