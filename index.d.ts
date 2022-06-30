@@ -52,6 +52,10 @@ export class Cumulonimbus {
     baseThumbURL?: string
   ): Promise<Cumulonimbus.Data.SanityCheck>;
 
+  public getThumbnail(
+    file: string | Cumulonimbus.Data.File
+  ): Promise<ArrayBuffer>;
+
   public getSelfSession(
     sid?: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
@@ -366,7 +370,7 @@ export namespace Cumulonimbus {
       updatedAt: string;
     }
 
-    export type DomainSlim = Omit<Domain, "createdAt" | "updatedAt">;
+    export type DomainSlim = Omit<Domain, 'createdAt' | 'updatedAt'>;
 
     export interface File {
       filename: string;
@@ -378,7 +382,7 @@ export namespace Cumulonimbus {
 
     export interface DeleteBulk {
       count: number;
-      type: "user" | "session" | "file" | "domain" | "instruction";
+      type: 'user' | 'session' | 'file' | 'domain' | 'instruction';
     }
 
     export interface Instruction {
@@ -405,30 +409,30 @@ export namespace Cumulonimbus {
 
     export interface SanityCheck {
       version: string;
-      hello: "world";
+      hello: 'world';
     }
   }
 
   export interface ErrorCode {
-    INSUFFICIENT_PERMISSIONS_ERROR: "Missing Permissions";
-    INVALID_USER_ERROR: "Invalid User";
-    INVALID_PASSWORD_ERROR: "Invalid Password";
-    INVALID_SESSION_ERROR: "Invalid Session";
-    INVALID_DOMAIN_ERROR: "Invalid Domain";
-    INVALID_SUBDOMAIN_ERROR: "Invalid Subdomain: <subdomain>";
-    INVALID_FILE_ERROR: "Invalid File";
-    INVALID_INSTRUCTION_ERROR: "Invalid Instruction";
-    INVALID_ENDPOINT_ERROR: "Invalid Endpoint";
-    SUBDOMAIN_NOT_SUPPORTED_ERROR: "Subdomain Not Supported";
-    DOMAIN_EXISTS_ERROR: "Domain Exists";
-    USER_EXISTS_ERROR: "User Exists";
-    INSTRUCTION_EXISTS_ERROR: "Instruction Exists";
-    MISSING_FIELDS_ERROR: "Missing Fields: <fields>";
-    BANNED_ERROR: "Banned";
-    BODY_TOO_LARGE_ERROR: "Body Too Large";
-    RATELIMITED_ERROR: "You Have Been Ratelimited. Please Try Again Later.";
-    INTERNAL_ERROR: "Internal Server Error";
-    GENERIC_ERROR: "<message>";
+    INSUFFICIENT_PERMISSIONS_ERROR: 'Missing Permissions';
+    INVALID_USER_ERROR: 'Invalid User';
+    INVALID_PASSWORD_ERROR: 'Invalid Password';
+    INVALID_SESSION_ERROR: 'Invalid Session';
+    INVALID_DOMAIN_ERROR: 'Invalid Domain';
+    INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain: <subdomain>';
+    INVALID_FILE_ERROR: 'Invalid File';
+    INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
+    INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
+    SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
+    DOMAIN_EXISTS_ERROR: 'Domain Exists';
+    USER_EXISTS_ERROR: 'User Exists';
+    INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
+    MISSING_FIELDS_ERROR: 'Missing Fields: <fields>';
+    BANNED_ERROR: 'Banned';
+    BODY_TOO_LARGE_ERROR: 'Body Too Large';
+    RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
+    INTERNAL_ERROR: 'Internal Server Error';
+    GENERIC_ERROR: '<message>';
   }
 
   export class ResponseError extends Error implements Data.Error {
@@ -436,6 +440,12 @@ export namespace Cumulonimbus {
     message: ErrorCode[keyof ErrorCode];
     ratelimit: RatelimitData | null;
     constructor(response: Data.Error, ratelimit?: RatelimitData | null);
+  }
+
+  export class ThumbnailError extends Error {
+    code: number;
+    message: string;
+    constructor(response: Response);
   }
 }
 
