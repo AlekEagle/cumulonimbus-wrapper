@@ -1,12 +1,315 @@
+export class Cumulonimbus {
+  private token: string;
+  private options: Cumulonimbus.ClientOptions;
+
+  constructor(token: string, options?: Cumulonimbus.ClientOptions);
+
+  private call<T>(
+    url: string,
+    options?: Cumulonimbus.APICallRequestInit
+  ): Promise<Cumulonimbus.APIResponse<T>>;
+
+  private authenticatedCall<T>(
+    url: string,
+    options?: Cumulonimbus.APICallRequestInit
+  ): Promise<Cumulonimbus.APIResponse<T>>;
+
+  private manufactureMethod<T extends any[], M>(
+    endpointTemplate: string | ((...args: T) => string),
+    method: string,
+    headers?: { [key: string]: string },
+    bodyTemplate?: string | null | ((...args: T) => string)
+  ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
+
+  private manufactureMethodGet<T extends any[], M>(
+    endpointTemplate: string | ((...args: T) => string),
+    headers?: { [key: string]: string }
+  ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
+
+  public static login(
+    user: string,
+    pass: string,
+    rememberMe?: boolean,
+    options?: Cumulonimbus.ClientOptions,
+    tokenName?: string
+  ): Promise<Cumulonimbus>;
+
+  public static register(
+    username: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+    rememberMe?: boolean,
+    options?: Cumulonimbus.ClientOptions,
+    tokenName?: string
+  ): Promise<Cumulonimbus>;
+
+  public static apiSanity(
+    baseURL?: string
+  ): Promise<Cumulonimbus.Data.SanityCheck>;
+
+  public static thumbnailSanity(
+    baseThumbURL?: string
+  ): Promise<Cumulonimbus.Data.SanityCheck>;
+
+  public getThumbnail(
+    file: string | Cumulonimbus.Data.File
+  ): Promise<ArrayBuffer>;
+
+  public getSelfSession(
+    sid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
+
+  public getSelfSessions(
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>
+  >;
+
+  public deleteSelfSession(
+    sid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
+
+  public deleteSelfSessions(
+    sids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public deleteAllSelfSessions(
+    allButSelf?: boolean
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public getSelf(): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public editSelf(
+    password: string,
+    data: {
+      username?: string;
+      email?: string;
+      newPassword?: string;
+    }
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public editSelfDomain(
+    domain: string,
+    subdomain?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public deleteSelf(
+    username: string,
+    password: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public getDomains(
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>>
+  >;
+
+  public getSlimDomains(): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.DomainSlim>
+    >
+  >;
+
+  public getDomain(
+    domain: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public getSelfFiles(
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>
+  >;
+
+  public getSelfFile(
+    file: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public deleteSelfFile(
+    file: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public deleteSelfFiles(
+    files: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public deleteAllSelfFiles(): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>
+  >;
+
+  public getInstructions(
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>
+    >
+  >;
+
+  public getInstruction(
+    instruction: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public upload(
+    file: string | Buffer | File | Blob | ArrayBuffer
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;
+
+  public getUsers(
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.User>>
+  >;
+
+  public getUser(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public editUser(
+    id: string,
+    data: {
+      username?: string;
+      email?: string;
+      password?: string;
+      staff?: boolean;
+    }
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public editUserDomain(
+    id: string,
+    domain: string,
+    subdomain?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public toggleUserBan(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public deleteUser(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public deleteUsers(
+    ids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public createDomain(
+    domain: string,
+    allowsSubdomains?: boolean
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public editDomain(
+    domain: string,
+    allowsSubdomains: boolean
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public deleteDomain(
+    domain: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public deleteDomains(
+    domains: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public getFiles(
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>
+  >;
+
+  public getUserFiles(
+    user: string,
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>
+  >;
+
+  public getFile(
+    file: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public deleteFile(
+    file: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public deleteFiles(
+    files: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public deleteAllUserFiles(
+    user: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public createInstruction(
+    name: string,
+    displayName: string,
+    description: string,
+    configContent: string,
+    steps: string[],
+    filename?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public editInstruction(
+    name: string,
+    data: {
+      displayName?: string;
+      description?: string;
+      fileContent?: string;
+      steps?: string[];
+      filename?: string | null;
+    }
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public deleteInstruction(
+    name: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public deleteInstructions(
+    names: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public getUserSessions(
+    user: string,
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>
+  >;
+
+  public getUserSession(
+    user: string,
+    sid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
+
+  public deleteUserSession(
+    user: string,
+    sid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
+
+  public deleteUserSessions(
+    user: string,
+    sids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+
+  public deleteAllUserSessions(
+    user: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+}
+
 export namespace Cumulonimbus {
   export const BASE_URL: string;
-
+  export const BASE_THUMB_URL: string;
   export const VERSION: string;
 
-  export interface RateLimitData {
-    maxRequests: number;
-    remainingRequests: number;
-    resetsAt: number;
+  export interface RatelimitData {
+    max: number;
+    remaining: number;
+    reset: number;
   }
 
   export interface ClientOptions {
@@ -16,9 +319,31 @@ export namespace Cumulonimbus {
 
   export interface APICallRequestInit extends RequestInit {
     baseURL?: string;
+    baseThumbnailURL?: string;
+  }
+
+  export interface APIResponse<T> {
+    result: T;
+    ratelimit: RatelimitData | null;
+    response: Response;
   }
 
   export namespace Data {
+    export interface List<T> {
+      count: number;
+      items: T[];
+    }
+
+    export interface Error {
+      code: string;
+      message: string;
+    }
+
+    export interface Success {
+      code: string;
+      message?: string;
+    }
+
     export interface User {
       id: string;
       username: string;
@@ -29,7 +354,6 @@ export namespace Cumulonimbus {
       bannedAt?: string;
       createdAt: string;
       updatedAt: string;
-      ratelimit: RateLimitData;
     }
 
     export interface Session {
@@ -37,25 +361,28 @@ export namespace Cumulonimbus {
       exp: number;
       sub: string;
       name: string;
-      ratelimit: RateLimitData;
     }
 
-    export interface List<T> {
-      count: number;
-      items: T[];
-      ratelimit: RateLimitData;
+    export interface Domain {
+      domain: string;
+      allowsSubdomains: boolean;
+      createdAt: string;
+      updatedAt: string;
     }
 
-    export interface Success {
-      code: string;
-      message?: string;
-      ratelimit: RateLimitData;
+    export type DomainSlim = Omit<Domain, 'createdAt' | 'updatedAt'>;
+
+    export interface File {
+      filename: string;
+      createdAt: string;
+      updatedAt: string;
+      userID: string;
+      size: number;
     }
 
     export interface DeleteBulk {
       count: number;
       type: 'user' | 'session' | 'file' | 'domain' | 'instruction';
-      ratelimit: RateLimitData;
     }
 
     export interface Instruction {
@@ -67,259 +394,59 @@ export namespace Cumulonimbus {
       displayName: string;
       createdAt: string;
       updatedAt: string;
-      ratelimit: RateLimitData;
-    }
-
-    export interface Domain {
-      domain: string;
-      allowsSubdomains: boolean;
-      createdAt: string;
-      updatedAt: string;
-      ratelimit: RateLimitData;
-    }
-
-    export interface DomainSlim {
-      domain: string;
-      allowsSubdomains: boolean;
-      ratelimit: RateLimitData;
-    }
-
-    export interface Error {
-      code: keyof ErrorCode;
-      message: ErrorCode[keyof ErrorCode];
-      ratelimit: RateLimitData;
     }
 
     export interface SuccessfulAuth {
       token: string;
       exp: number;
-      ratelimit: RateLimitData;
-    }
-
-    export interface File {
-      filename: string;
-      createdAt: string;
-      updatedAt: string;
-      userID: string;
-      size: number;
-      ratelimit: RateLimitData;
     }
 
     export interface SuccessfulUpload {
       url: string;
       thumbnail: string;
       manage: string;
-      ratelimit: RateLimitData;
-    }
-
-    export interface ErrorCode {
-      INSUFFICIENT_PERMISSIONS_ERROR: 'Missing Permissions';
-      INVALID_USER_ERROR: 'Invalid User';
-      INVALID_PASSWORD_ERROR: 'Invalid Password';
-      INVALID_SESSION_ERROR: 'Invalid Session';
-      INVALID_DOMAIN_ERROR: 'Invalid Domain';
-      INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain: <subdomain>';
-      INVALID_FILE_ERROR: 'Invalid File';
-      INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
-      INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
-      SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
-      DOMAIN_EXISTS_ERROR: 'Domain Exists';
-      USER_EXISTS_ERROR: 'User Exists';
-      INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
-      MISSING_FIELDS_ERROR: 'Missing Fields: <fields>';
-      BANNED_ERROR: 'Banned';
-      BODY_TOO_LARGE_ERROR: 'Body Too Large';
-      RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
-      INTERNAL_ERROR: 'Internal Server Error';
-      GENERIC_ERROR: '<message>';
     }
 
     export interface SanityCheck {
       version: string;
       hello: 'world';
-      ratelimit?: RateLimitData;
     }
+  }
+
+  export interface ErrorCode {
+    INSUFFICIENT_PERMISSIONS_ERROR: 'Missing Permissions';
+    INVALID_USER_ERROR: 'Invalid User';
+    INVALID_PASSWORD_ERROR: 'Invalid Password';
+    INVALID_SESSION_ERROR: 'Invalid Session';
+    INVALID_DOMAIN_ERROR: 'Invalid Domain';
+    INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain: <subdomain>';
+    INVALID_FILE_ERROR: 'Invalid File';
+    INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
+    INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
+    SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
+    DOMAIN_EXISTS_ERROR: 'Domain Exists';
+    USER_EXISTS_ERROR: 'User Exists';
+    INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
+    MISSING_FIELDS_ERROR: 'Missing Fields: <fields>';
+    BANNED_ERROR: 'Banned';
+    BODY_TOO_LARGE_ERROR: 'Body Too Large';
+    RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
+    INTERNAL_ERROR: 'Internal Server Error';
+    GENERIC_ERROR: '<message>';
   }
 
   export class ResponseError extends Error implements Data.Error {
-    public ratelimit: RateLimitData;
-    public code: keyof Data.ErrorCode;
-    public message: Data.ErrorCode[typeof this.code];
-    constructor(response: Data.Error);
+    code: keyof ErrorCode;
+    message: ErrorCode[keyof ErrorCode];
+    ratelimit: RatelimitData | null;
+    constructor(response: Data.Error, ratelimit?: RatelimitData | null);
+  }
+
+  export class ThumbnailError extends Error {
+    code: number;
+    message: string;
+    constructor(response: Response);
   }
 }
 
-export class Client {
-  private token: string;
-  private options: Cumulonimbus.ClientOptions;
-  public static login(
-    user: string,
-    pass: string,
-    rememberMe: boolean,
-    options?: Cumulonimbus.ClientOptions
-  ): Promise<Client>;
-  public static createAccount(
-    username: string,
-    password: string,
-    repeatPassword: string,
-    email: string,
-    rememberMe: boolean,
-    options?: Cumulonimbus.ClientOptions
-  ): Promise<Client>;
-  constructor(token: string, options?: Cumulonimbus.ClientOptions);
-  private authenticatedCall<T>(
-    url: string,
-    options: RequestInit
-  ): Promise<{ res: Response; payload: T }>;
-  public getSelfSessionByID(sid?: string): Promise<Cumulonimbus.Data.Session>;
-  public sanityCheck(): Promise<Cumulonimbus.Data.SanityCheck>;
-  public thumbnailSanityCheck(): Promise<Cumulonimbus.Data.SanityCheck>;
-  public getThumbnail(filename: string): Promise<ArrayBuffer>;
-  public getSelfSessions(
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>;
-  public deleteSelfSessionByID(sid: string): Promise<Cumulonimbus.Data.Session>;
-  public bulkDeleteSelfSessionsByID(
-    sids: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public bulkDeleteAllSelfSessions(
-    allButSelf: boolean
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public getSelfUser(): Promise<Cumulonimbus.Data.User>;
-  public editSelfUser(
-    currentPasswd: string,
-    newContent: { username?: string; newPassword?: string; email?: string }
-  ): Promise<Cumulonimbus.Data.User>;
-  public deleteSelfUser(
-    username: string,
-    password: string
-  ): Promise<Cumulonimbus.Data.User>;
-  public editSelfDomain(
-    domain: string,
-    subdomain?: string
-  ): Promise<Cumulonimbus.Data.User>;
-  public getDomains(
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>>;
-  public getDomainsSlim(): Promise<
-    Cumulonimbus.Data.List<Cumulonimbus.Data.DomainSlim>
-  >;
-  public getSelfFiles(
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
-  public getSelfFileByID(id: string): Promise<Cumulonimbus.Data.File>;
-  public deleteSelfFileByID(id: string): Promise<Cumulonimbus.Data.File>;
-  public bulkDeleteSelfFilesByID(
-    files: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public bulkDeleteAllSelfFiles(): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public getInstructions(
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>>;
-  public getInstructionByID(id: string): Promise<Cumulonimbus.Data.Instruction>;
-  public getUsers(
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.User>>;
-  public getUserByID(id: string): Promise<Cumulonimbus.Data.User>;
-  public editUserByID(
-    id: string,
-    newContent: {
-      username?: string;
-      password?: string;
-      email?: string;
-      staff?: boolean;
-    }
-  ): Promise<Cumulonimbus.Data.User>;
-  public editUserDomain(
-    id: string,
-    domain: string,
-    subdomain?: string | null
-  ): Promise<Cumulonimbus.Data.User>;
-  public toggleUserBan(id: string): Promise<Cumulonimbus.Data.User>;
-  public deleteUserByID(id: string): Promise<Cumulonimbus.Data.User>;
-  public bulkDeleteUsersByID(
-    users: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public createDomain(
-    domain: string,
-    allowsSubdomains: boolean
-  ): Promise<Cumulonimbus.Data.Domain>;
-  public editDomainByID(
-    id: string,
-    allowsSubdomains: boolean
-  ): Promise<Cumulonimbus.Data.Domain>;
-  public deleteDomainByID(id: string): Promise<Cumulonimbus.Data.Domain>;
-  public bulkDeleteDomainsByID(
-    domains: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public getFiles(
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
-  public getUserFiles(
-    userID: string,
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>;
-  public getFileByID(fileID: string): Promise<Cumulonimbus.Data.File>;
-  public deleteFileByID(fileID: string): Promise<Cumulonimbus.Data.File>;
-  public bulkDeleteAllUserFiles(
-    userID: string
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public bulkDeleteFilesByID(
-    files: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public createInstruction(
-    name: string,
-    steps: string[],
-    filename: string | null,
-    fileContent: string,
-    description: string,
-    displayName: string
-  ): Promise<Cumulonimbus.Data.Instruction>;
-  public editInstructionByID(
-    id: string,
-    newContent: {
-      steps?: string[];
-      filename?: string | null;
-      fileContent?: string;
-      description?: string;
-      displayName?: string;
-    }
-  ): Promise<Cumulonimbus.Data.Instruction>;
-  public deleteInstructionByID(
-    id: string
-  ): Promise<Cumulonimbus.Data.Instruction>;
-  public bulkDeleteInstructionsByID(
-    instructions: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public getUserSessionsByID(
-    id: string,
-    limit?: number,
-    offset?: number
-  ): Promise<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>;
-  public getUserSessionByID(
-    id: string,
-    sid: string
-  ): Promise<Cumulonimbus.Data.Session>;
-  public deleteUserSessionByID(
-    id: string,
-    sid: string
-  ): Promise<Cumulonimbus.Data.Session>;
-  public bulkDeleteUserSessionsByID(
-    id: string,
-    sessions: string[]
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public bulkDeleteUserSessions(
-    id: string
-  ): Promise<Cumulonimbus.Data.DeleteBulk>;
-  public uploadData(
-    file: Buffer | ArrayBuffer | Blob | File,
-    filename?: string
-  ): Promise<Cumulonimbus.Data.SuccessfulUpload>;
-}
+export default Cumulonimbus;

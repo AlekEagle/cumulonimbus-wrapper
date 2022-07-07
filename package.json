@@ -1,10 +1,10 @@
 {
   "name": "cumulonimbus-wrapper",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "A wrapper for the Cumulonimbus API.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc ; node dist/test/index.js"
   },
   "types": "index.d.ts",
   "repository": {
