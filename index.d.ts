@@ -261,7 +261,7 @@ export class Cumulonimbus {
       description?: string;
       fileContent?: string;
       steps?: string[];
-      filename?: string;
+      filename?: string | null;
     }
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 

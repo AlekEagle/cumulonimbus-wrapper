@@ -592,7 +592,7 @@ class Cumulonimbus {
         description?: string;
         fileContent?: string;
         steps?: string[];
-        filename?: string;
+        filename?: string | null;
       }
     ],
     Cumulonimbus.Data.Instruction
@@ -601,9 +601,7 @@ class Cumulonimbus {
     'PATCH',
     WITH_BODY,
     (id, data) => {
-      if (data.filename)
-        return JSON.stringify({ ...data, filename: data.filename });
-      else return JSON.stringify({ ...data });
+      return JSON.stringify({ ...data });
     }
   );
 
