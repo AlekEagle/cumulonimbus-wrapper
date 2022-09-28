@@ -689,6 +689,8 @@ namespace Cumulonimbus {
     export interface Error {
       code: string;
       message: string;
+      parsedSubdomain?: string;
+      fields?: string[];
     }
 
     export interface Success {
@@ -771,32 +773,40 @@ namespace Cumulonimbus {
     INVALID_PASSWORD_ERROR: 'Invalid Password';
     INVALID_SESSION_ERROR: 'Invalid Session';
     INVALID_DOMAIN_ERROR: 'Invalid Domain';
-    INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain: <subdomain>';
+    INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain';
     INVALID_FILE_ERROR: 'Invalid File';
     INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
     INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
     SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
-    DOMAIN_EXISTS_ERROR: 'Domain Exists';
-    USER_EXISTS_ERROR: 'User Exists';
-    INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
-    MISSING_FIELDS_ERROR: 'Missing Fields: <fields>';
-    BANNED_ERROR: 'Banned';
+    DOMAIN_EXISTS_ERROR: 'Domain Already Exists';
+    USER_EXISTS_ERROR: 'User Already Exists';
+    INSTRUCTION_EXISTS_ERROR: 'Instruction Already Exists';
+    MISSING_FIELDS_ERROR: 'Missing Fields';
+    BANNED_ERROR: 'Account Banned';
     BODY_TOO_LARGE_ERROR: 'Body Too Large';
     RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
     INTERNAL_ERROR: 'Internal Server Error';
-    GENERIC_ERROR: '<message>';
+    GENERIC_ERROR: '';
   }
 
   export class ResponseError extends Error implements Data.Error {
     code: keyof ErrorCode;
     message: ErrorCode[keyof ErrorCode];
     ratelimit: RatelimitData | null;
+    parsedSubdomain?: string;
+    fields?: string[];
     constructor(response: Data.Error, ratelimit: RatelimitData | null = null) {
       super(response.message);
       Object.setPrototypeOf(this, ResponseError.prototype);
       this.code = response.code as keyof ErrorCode;
       this.message = response.message as ErrorCode[keyof ErrorCode];
       this.ratelimit = ratelimit;
+      if (this.code === 'INVALID_SUBDOMAIN_ERROR') {
+        this.parsedSubdomain = response.parsedSubdomain;
+      }
+      if (this.code === 'MISSING_FIELDS_ERROR') {
+        this.fields = response.fields;
+      }
     }
   }
 
