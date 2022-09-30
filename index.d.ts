@@ -38,8 +38,8 @@ export class Cumulonimbus {
   // Login to the API with a username and password.
   // See: https://docs.alekeagle.me/api/user/session.html#post-user-session
   public static login(
-    user: string,
-    pass: string,
+    username: string,
+    password: string,
     rememberMe?: boolean,
     options?: Cumulonimbus.ClientOptions,
     tokenName?: string
@@ -51,7 +51,7 @@ export class Cumulonimbus {
     username: string,
     email: string,
     password: string,
-    confirmPassword: string,
+    repeatPassword: string,
     rememberMe?: boolean,
     options?: Cumulonimbus.ClientOptions,
     tokenName?: string

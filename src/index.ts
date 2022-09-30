@@ -159,8 +159,8 @@ class Cumulonimbus {
   }
 
   public static async login(
-    user: string,
-    pass: string,
+    username: string,
+    password: string,
     rememberMe: boolean = false,
     options?: Cumulonimbus.ClientOptions,
     tokenName?: string
@@ -177,8 +177,8 @@ class Cumulonimbus {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          user,
-          pass,
+          username,
+          password,
           rememberMe
         })
       }
@@ -205,7 +205,7 @@ class Cumulonimbus {
     username: string,
     email: string,
     password: string,
-    confirmPassword: string,
+    repeatPassword: string,
     rememberMe: boolean = false,
     options?: Cumulonimbus.ClientOptions,
     tokenName?: string
@@ -226,7 +226,7 @@ class Cumulonimbus {
           email,
           password,
           rememberMe,
-          repeatPassword: confirmPassword
+          repeatPassword
         })
       }
     );
