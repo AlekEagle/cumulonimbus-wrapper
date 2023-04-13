@@ -1,8 +1,12 @@
-import fetch from "isomorphic-fetch";
-import toFormData from "./isomorphicFormData";
-
 // Get version from package.json
 const version = require("../package.json").version;
+
+let isBrowser: boolean;
+
+(async function () {
+  if (globalThis instanceof Window) isBrowser = true;
+  else isBrowser = false;
+})().catch(() => (isBrowser = false));
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -423,7 +427,20 @@ class Cumulonimbus {
   public async upload(
     file: string | Buffer | File | Blob | ArrayBuffer
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>> {
-    const formData = await toFormData(file);
+    const formData = new FormData();
+    if (typeof file === "string") {
+      formData.append("file", new Blob([file]));
+    } else if (file instanceof Buffer) {
+      formData.append("file", new Blob([file]));
+    } else if (file instanceof File) {
+      formData.append("file", file);
+    } else if (file instanceof Blob) {
+      formData.append("file", file);
+    } else if (file instanceof ArrayBuffer) {
+      formData.append("file", new Blob([file]));
+    } else {
+      throw new Error("Invalid file type");
+    }
     const res =
       await this.authenticatedCall<Cumulonimbus.Data.SuccessfulUpload>(
         "/upload",

@@ -12,6 +12,6 @@ The official JavaScript API wrapper of the Cumulonimbus ecosystem.
 
 ## What is in this repository?
 
-This is the official API wrapper written for JavaScript. It's kept up to date with the latest changes of the API and handles most of the heavy lifting for you. Compatible in both the browser as well as NodeJS* environments. Type definitions are included.
+This is the official API wrapper written for JavaScript. It's kept up to date with the latest changes of the API and handles most of the heavy lifting for you. Compatible in both the browser as well as NodeJS\* environments. Type definitions are included.
 
-\* Requires the installation of `node-fetch` to be used in NodeJS environments.
+\* NodeJS 18.0.0 or higher is required.
