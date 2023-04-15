@@ -1,13 +1,6 @@
 // Get version from package.json
 const version = require("../package.json").version;
 
-let isBrowser: boolean;
-
-(async function () {
-  if (globalThis instanceof Window) isBrowser = true;
-  else isBrowser = false;
-})().catch(() => (isBrowser = false));
-
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
   const result = { ...obj1 };
@@ -430,7 +423,7 @@ class Cumulonimbus {
     const formData = new FormData();
     if (typeof file === "string") {
       formData.append("file", new Blob([file]));
-    } else if (file instanceof Buffer) {
+    } else if (globalThis.Buffer && file instanceof globalThis.Buffer) {
       formData.append("file", new Blob([file]));
     } else if (file instanceof File) {
       formData.append("file", file);
