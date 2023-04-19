@@ -23,6 +23,10 @@ const WITH_BODY = {
 class Cumulonimbus {
   private token: string;
   private options: Cumulonimbus.ClientOptions;
+  private userAgent: string =
+    globalThis.navigator && globalThis.navigator.userAgent
+      ? globalThis.navigator.userAgent
+      : `Cumulonimbus-Wrapper/${version}`;
 
   constructor(token: string, options?: Cumulonimbus.ClientOptions) {
     this.token = token;
@@ -35,7 +39,7 @@ class Cumulonimbus {
   ): Promise<Cumulonimbus.APIResponse<T>> {
     const opts = merge(options, {
       headers: {
-        "User-Agent": `Cumulonimbus/${version}`,
+        "User-Agent": this.userAgent,
       },
     });
 
@@ -164,7 +168,10 @@ class Cumulonimbus {
   ): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       "Content-Type": "application/json",
-      "User-Agent": `Cumulonimbus-Wrapper/${version}`,
+      "User-Agent":
+        globalThis.navigator && globalThis.navigator.userAgent
+          ? globalThis.navigator.userAgent
+          : `Cumulonimbus-Wrapper/${version}`,
     };
     if (tokenName) headers["X-Token-Name"] = tokenName;
     const res = await fetch(
@@ -209,7 +216,10 @@ class Cumulonimbus {
   ): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       "Content-Type": "application/json",
-      "User-Agent": `Cumulonimbus-Wrapper/${version}`,
+      "User-Agent":
+        globalThis.navigator && globalThis.navigator.userAgent
+          ? globalThis.navigator.userAgent
+          : `Cumulonimbus-Wrapper/${version}`,
     };
     if (tokenName) headers["X-Token-Name"] = tokenName;
     const res = await fetch(
