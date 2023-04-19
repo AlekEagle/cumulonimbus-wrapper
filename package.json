@@ -1,6 +1,6 @@
 {
   "name": "cumulonimbus-wrapper",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "A wrapper for the Cumulonimbus API.",
   "main": "dist/index.js",
   "scripts": {
