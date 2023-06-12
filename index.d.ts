@@ -112,15 +112,26 @@ export class Cumulonimbus {
   // See: https://docs.alekeagle.me/api/user/account.html#get-user
   public getSelf(): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
-  // Update the current authenticated user.
-  // See: https://docs.alekeagle.me/api/user/account.html#patch-user
-  public editSelf(
+  // Update the current authenticated user's username.
+  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-username
+  public editSelfUsername(
+    username: string,
+    password: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  // Update the current authenticated user's email.
+  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-email
+  public editSelfEmail(
+    email: string,
+    password: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  // Update the current authenticated user's password.
+  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-password
+  public editSelfPassword(
     password: string,
-    data: {
-      username?: string;
-      email?: string;
-      newPassword?: string;
-    }
+    newPassword: string,
+    confirmNewPassword: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   // Update the current authenticated user's domain and subdomain selection.
@@ -231,16 +242,25 @@ export class Cumulonimbus {
     id: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
-  // Update a specific user.
-  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id
-  public editUser(
+  // Update a specific user's username.
+  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-username
+  public editUserUsername(
     id: string,
-    data: {
-      username?: string;
-      email?: string;
-      password?: string;
-      staff?: boolean;
-    }
+    username: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  // Update a specific user's email.
+  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-email
+  public editUserEmail(
+    id: string,
+    email: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  // Update a specific user's password.
+  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-password
+  public editUserPassword(
+    id: string,
+    password: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   // Update a specific user's domain and subdomain selection.
@@ -496,7 +516,7 @@ export namespace Cumulonimbus {
     }
 
     // The structure of a slim domain.
-    export type DomainSlim = Omit<Domain, 'createdAt' | 'updatedAt'>;
+    export type DomainSlim = Omit<Domain, "createdAt" | "updatedAt">;
 
     // The structure of a file.
     export interface File {
@@ -510,7 +530,7 @@ export namespace Cumulonimbus {
     // The structure of a bulk delete.
     export interface DeleteBulk {
       count: number;
-      type: 'user' | 'session' | 'file' | 'domain' | 'instruction';
+      type: "user" | "session" | "file" | "domain" | "instruction";
     }
 
     // The structure of a setup instruction.
@@ -541,31 +561,31 @@ export namespace Cumulonimbus {
     // The structure of a API sanity check.
     export interface SanityCheck {
       version: string;
-      hello: 'world';
+      hello: "world";
     }
   }
 
   // All error codes and possible messages returned by the API.
   export interface ErrorCode {
-    INSUFFICIENT_PERMISSIONS_ERROR: 'Missing Permissions';
-    INVALID_USER_ERROR: 'Invalid User';
-    INVALID_PASSWORD_ERROR: 'Invalid Password';
-    INVALID_SESSION_ERROR: 'Invalid Session';
-    INVALID_DOMAIN_ERROR: 'Invalid Domain';
-    INVALID_SUBDOMAIN_ERROR: 'Invalid Subdomain';
-    INVALID_FILE_ERROR: 'Invalid File';
-    INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
-    INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
-    SUBDOMAIN_NOT_SUPPORTED_ERROR: 'Subdomain Not Supported';
-    DOMAIN_EXISTS_ERROR: 'Domain Exists';
-    USER_EXISTS_ERROR: 'User Exists';
-    INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
-    MISSING_FIELDS_ERROR: 'Missing Fields';
-    BANNED_ERROR: 'Banned';
-    BODY_TOO_LARGE_ERROR: 'Body Too Large';
-    RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
-    INTERNAL_ERROR: 'Internal Server Error';
-    GENERIC_ERROR: '';
+    INSUFFICIENT_PERMISSIONS_ERROR: "Missing Permissions";
+    INVALID_USER_ERROR: "Invalid User";
+    INVALID_PASSWORD_ERROR: "Invalid Password";
+    INVALID_SESSION_ERROR: "Invalid Session";
+    INVALID_DOMAIN_ERROR: "Invalid Domain";
+    INVALID_SUBDOMAIN_ERROR: "Invalid Subdomain";
+    INVALID_FILE_ERROR: "Invalid File";
+    INVALID_INSTRUCTION_ERROR: "Invalid Instruction";
+    INVALID_ENDPOINT_ERROR: "Invalid Endpoint";
+    SUBDOMAIN_NOT_SUPPORTED_ERROR: "Subdomain Not Supported";
+    DOMAIN_EXISTS_ERROR: "Domain Exists";
+    USER_EXISTS_ERROR: "User Exists";
+    INSTRUCTION_EXISTS_ERROR: "Instruction Exists";
+    MISSING_FIELDS_ERROR: "Missing Fields";
+    BANNED_ERROR: "Banned";
+    BODY_TOO_LARGE_ERROR: "Body Too Large";
+    RATELIMITED_ERROR: "You Have Been Ratelimited. Please Try Again Later.";
+    INTERNAL_ERROR: "Internal Server Error";
+    GENERIC_ERROR: "";
   }
 
   // The error that is thrown when an API call fails.

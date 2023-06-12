@@ -349,11 +349,29 @@ class Cumulonimbus {
     "/user"
   );
 
-  public editSelf = this.manufactureMethod<
-    [string, { username?: string; email?: string; newPassword?: string }],
+  public editSelfUsername = this.manufactureMethod<
+    [string, string],
     Cumulonimbus.Data.User
-  >("/user", "PATCH", WITH_BODY, (password, data) =>
-    JSON.stringify({ password, ...data })
+  >("/user/username", "PATCH", WITH_BODY, (username, password) =>
+    JSON.stringify({ username, password })
+  );
+
+  public editSelfEmail = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.User
+  >("/user/email", "PATCH", WITH_BODY, (email, password) =>
+    JSON.stringify({ email, password })
+  );
+
+  public editSelfPassword = this.manufactureMethod<
+    [string, string, string],
+    Cumulonimbus.Data.User
+  >(
+    "/user/password",
+    "PATCH",
+    WITH_BODY,
+    (password, newPassword, confirmNewPassword) =>
+      JSON.stringify({ password, newPassword, confirmNewPassword })
   );
 
   public editSelfDomain = this.manufactureMethod<
@@ -468,17 +486,34 @@ class Cumulonimbus {
     (id) => `/user/${id}`
   );
 
-  public editUser = this.manufactureMethod<
-    [
-      string,
-      { username?: string; email?: string; password?: string; staff?: boolean }
-    ],
+  public editUserUsername = this.manufactureMethod<
+    [string, string],
     Cumulonimbus.Data.User
   >(
-    (id, data) => `/user/${id}`,
+    (id, username) => `/user/${id}/username`,
     "PATCH",
     WITH_BODY,
-    (id, data) => JSON.stringify({ ...data })
+    (id, username) => JSON.stringify({ username })
+  );
+
+  public editUserEmail = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.User
+  >(
+    (id, email) => `/user/${id}/email`,
+    "PATCH",
+    WITH_BODY,
+    (id, email) => JSON.stringify({ email })
+  );
+
+  public editUserPassword = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.User
+  >(
+    (id, password) => `/user/${id}/password`,
+    "PATCH",
+    WITH_BODY,
+    (id, password) => JSON.stringify({ password })
   );
 
   public editUserDomain = this.manufactureMethod<
