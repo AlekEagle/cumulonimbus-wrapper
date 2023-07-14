@@ -459,8 +459,8 @@ class Cumulonimbus {
   public createDomain = this.manufactureMethod<
     [string, boolean | undefined],
     Cumulonimbus.Data.Domain
-  >("/domains", "POST", WITH_BODY, (domain, subdomains) => {
-    return JSON.stringify({ domain, subdomains });
+  >("/domains", "POST", WITH_BODY, (id, subdomains) => {
+    return JSON.stringify({ id, subdomains });
   });
 
   public allowSubdomains = this.manufactureMethod<
