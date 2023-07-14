@@ -381,7 +381,11 @@ class Cumulonimbus {
     "PUT",
     WITH_BODY,
     (newPassword, confirmNewPassword, oldPassword, uid) => {
-      return JSON.stringify({ newPassword, confirmNewPassword, oldPassword });
+      return JSON.stringify({
+        newPassword,
+        confirmNewPassword,
+        password: oldPassword,
+      });
     }
   );
 
@@ -506,7 +510,7 @@ class Cumulonimbus {
     [string, string | undefined],
     Cumulonimbus.Data.File
   >(
-    (id, name) => `/files/${id}`,
+    (id, name) => `/files/${id}/name`,
     "PUT",
     WITH_BODY,
     (id, name) => {
