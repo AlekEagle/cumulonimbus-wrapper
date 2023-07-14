@@ -1,5 +1,5 @@
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = "3.0.0";
+const version = "3.0.2";
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
