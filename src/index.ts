@@ -352,7 +352,7 @@ class Cumulonimbus {
     [string, string | undefined, string | undefined],
     Cumulonimbus.Data.User
   >(
-    (username, password, uid) => `/users/${uid || "me"}`,
+    (username, password, uid) => `/users/${uid || "me"}/username`,
     "PUT",
     WITH_BODY,
     (username, password, uid) => {
@@ -364,7 +364,7 @@ class Cumulonimbus {
     [string, string | undefined, string | undefined],
     Cumulonimbus.Data.User
   >(
-    (email, password, uid) => `/users/${uid || "me"}`,
+    (email, password, uid) => `/users/${uid || "me"}/email`,
     "PUT",
     WITH_BODY,
     (email, password, uid) => {
@@ -377,7 +377,7 @@ class Cumulonimbus {
     Cumulonimbus.Data.User
   >(
     (newPassword, confirmNewPassword, oldPassword, uid) =>
-      `/users/${uid || "me"}`,
+      `/users/${uid || "me"}/password`,
     "PUT",
     WITH_BODY,
     (newPassword, confirmNewPassword, oldPassword, uid) => {
