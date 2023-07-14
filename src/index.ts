@@ -1,5 +1,5 @@
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = "3.0.2";
+const version = "3.0.3";
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -592,7 +592,7 @@ class Cumulonimbus {
     [string, string],
     Cumulonimbus.Data.Instruction
   >(
-    (id, name) => `/instructions/${id}`,
+    (id, name) => `/instructions/${id}/name`,
     "PUT",
     WITH_BODY,
     (id, name) => {
