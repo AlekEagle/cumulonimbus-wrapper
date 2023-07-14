@@ -1,5 +1,5 @@
 // The Cumulonimbus API wrapper.
-export class Cumulonimbus {
+declare class Cumulonimbus {
   // The token of the Cumulonimbus wrapper instance.
   private token: string;
 
@@ -35,8 +35,6 @@ export class Cumulonimbus {
     headers?: { [key: string]: string }
   ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
 
-  // Login to the API with a username and password.
-  // See: https://docs.alekeagle.me/api/user/session.html#post-user-session
   public static login(
     username: string,
     password: string,
@@ -45,538 +43,373 @@ export class Cumulonimbus {
     tokenName?: string
   ): Promise<Cumulonimbus>;
 
-  // Register a new user with the API.
-  // See: https://docs.alekeagle.me/api/user/account.html#post-user
   public static register(
     username: string,
     email: string,
     password: string,
     repeatPassword: string,
     rememberMe?: boolean,
-    options?: Cumulonimbus.ClientOptions,
-    tokenName?: string
+    options?: Cumulonimbus.ClientOptions
   ): Promise<Cumulonimbus>;
 
-  // Get the API's current status.
-  // See: https://docs.alekeagle.me/api/#any-api
-  public static apiSanity(
-    baseURL?: string
-  ): Promise<Cumulonimbus.Data.SanityCheck>;
+  public static getAPIStatus(
+    options?: Cumulonimbus.ClientOptions
+  ): Promise<Cumulonimbus.Data.APIStatus>;
 
-  // Get the thumbnail API's current status.
-  // See: https://docs.alekeagle.me/api/thumbnail/general.html#any
-  public static thumbnailSanity(
-    baseThumbURL?: string
-  ): Promise<Cumulonimbus.Data.SanityCheck>;
+  public static getThumbnailAPIStatus(
+    options?: Cumulonimbus.ClientOptions
+  ): Promise<Cumulonimbus.Data.APIStatus>;
 
-  // Get a thumbnail from the thumbnail API.
-  // See: https://docs.alekeagle.me/api/thumbnail/general.html#get-file
   public getThumbnail(
-    file: string | Cumulonimbus.Data.File
+    id: string | Cumulonimbus.Data.File
   ): Promise<ArrayBuffer>;
 
-  // Get the current session used to authenticate.
-  // See: https://docs.alekeagle.me/api/user/session.html#get-user-session
-  public getSelfSession(
-    sid?: string
+  public getSession(
+    sid?: string,
+    uid?: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
 
-  // Get all sessions for the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/session.html#get-user-sessions
-  public getSelfSessions(
+  public getSessions(
+    uid?: string,
     limit?: number,
     offset?: number
   ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>
-  >;
-
-  // Delete a specific session for the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/session.html#delete-user-session-id
-  public deleteSelfSession(
-    sid: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
-
-  // Bulk delete multiple sessions for the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/session.html#delete-user-sessions
-  public deleteSelfSessions(
-    sids: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Delete all sessions for the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/session.html#delete-user-sessions-all
-  public deleteAllSelfSessions(
-    allButSelf?: boolean
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Get the current authenticated user.
-  // See: https://docs.alekeagle.me/api/user/account.html#get-user
-  public getSelf(): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update the current authenticated user's username.
-  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-username
-  public editSelfUsername(
-    username: string,
-    password: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update the current authenticated user's email.
-  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-email
-  public editSelfEmail(
-    email: string,
-    password: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update the current authenticated user's password.
-  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-password
-  public editSelfPassword(
-    password: string,
-    newPassword: string,
-    confirmNewPassword: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update the current authenticated user's domain and subdomain selection.
-  // See: https://docs.alekeagle.me/api/user/account.html#patch-user-domain
-  public editSelfDomain(
-    domain: string,
-    subdomain?: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Delete the current authenticated user.
-  // See: https://docs.alekeagle.me/api/user/account.html#delete-user
-  public deleteSelf(
-    username: string,
-    password: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Get the list of usable domains.
-  // See: https://docs.alekeagle.me/api/user/domain.html#get-domains
-  public getDomains(
-    limit?: number,
-    offset?: number
-  ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.Domain>>
-  >;
-
-  // Get the list of usable domains, stripped of unnecessary data for use in a dropdown.
-  // See: https://docs.alekeagle.me/api/user/domain.html#get-domains-slim
-  public getSlimDomains(): Promise<
     Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.DomainSlim>
+      Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, "exp">>
     >
   >;
 
-  // Get details about a specific domain.
-  // See: https://docs.alekeagle.me/api/user/domain.html#get-domain-id
-  public getDomain(
-    domain: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+  public deleteSession(
+    sid: string,
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
-  // Get all files owned by the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/file.html#get-user-files
-  public getSelfFiles(
+  public deleteSessions(
+    sids: string[],
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public deleteAllSessions(
+    uid?: string,
+    includeSelf?: boolean
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public getUsers(
     limit?: number,
     offset?: number
   ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, "id" | "username">>
+    >
   >;
 
-  // Get a specific file owned by the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/file.html#get-user-file-id
-  public getSelfFile(
-    file: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+  public getUser(
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
-  // Delete a specific file owned by the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/file.html#delete-user-file-id
-  public deleteSelfFile(
-    file: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+  public editUsername(
+    username: string,
+    password?: string,
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
-  // Bulk delete multiple files owned by the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/file.html#delete-user-files
-  public deleteSelfFiles(
-    files: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+  public editEmail(
+    email: string,
+    password?: string,
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
-  // Delete all files owned by the authenticated user.
-  // See: https://docs.alekeagle.me/api/user/file.html#delete-user-files-all
-  public deleteAllSelfFiles(): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>
+  public editPassword(
+    newPassword: string,
+    confirmNewPassword: string,
+    oldPassword?: string,
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public grantStaff(
+    uid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public revokeStaff(
+    uid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public banUser(
+    uid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public unbanUser(
+    uid: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public editDomainSelection(
+    domain: string,
+    subdomain?: string,
+    uid?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public deleteUser(
+    uid?: string,
+    username?: string,
+    password?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public deleteUsers(
+    uids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public getDomains(
+    limit?: "all" | number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<
+        Extract<Cumulonimbus.Data.Domain, "id" | "subdomains">
+      >
+    >
   >;
 
-  // Get a list of all setup instructions for various services.
-  // See: https://docs.alekeagle.me/api/user/instruction.html#get-instructions
+  public getDomain(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public createDomain(
+    id: string,
+    subdomains?: boolean
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public allowSubdomains(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public disallowSubdomains(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
+
+  public deleteDomain(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public deleteDomains(
+    ids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public getFiles(
+    uid?: string,
+    limit?: number,
+    offset?: number
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, "id" | "name">>
+    >
+  >;
+
+  public getFile(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public editFilename(
+    id: string,
+    name?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public editFileExtension(
+    id: string,
+    extension: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  public deleteFile(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public deleteFiles(
+    ids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public deleteAllFiles(
+    user?: string,
+    password?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
   public getInstructions(
     limit?: number,
     offset?: number
   ): Promise<
     Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.Instruction>
+      Cumulonimbus.Data.List<
+        Extract<Cumulonimbus.Data.Instruction, "id" | "name" | "description">
+      >
     >
   >;
 
-  // Get specific setup instructions for a service.
-  // See: https://docs.alekeagle.me/api/user/instruction.html#get-instruction-id
   public getInstruction(
-    instruction: string
+    id: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
-  // Upload data or a file.
-  // See: https://docs.alekeagle.me/api/user/file.html#post-upload
-  public upload(
-    file: string | Buffer | File | Blob | ArrayBuffer
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;
-
-  // Get a list of all users.
-  // See: https://docs.alekeagle.me/api/admin/account.html#get-users
-  public getUsers(
-    limit?: number,
-    offset?: number
-  ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.User>>
-  >;
-
-  // Get a specific user.
-  // See: https://docs.alekeagle.me/api/admin/account.html#get-user-id
-  public getUser(
-    id: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update a specific user's username.
-  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-username
-  public editUserUsername(
-    id: string,
-    username: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update a specific user's email.
-  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-email
-  public editUserEmail(
-    id: string,
-    email: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update a specific user's password.
-  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-password
-  public editUserPassword(
-    id: string,
-    password: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Update a specific user's domain and subdomain selection.
-  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-domain
-  public editUserDomain(
-    id: string,
-    domain: string,
-    subdomain?: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Toggle the ban status of a specific user.
-  // See: https://docs.alekeagle.me/api/admin/account.html#patch-user-id-ban
-  public toggleUserBan(
-    id: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Delete a specific user.
-  // See: https://docs.alekeagle.me/api/admin/account.html#delete-user-id
-  public deleteUser(
-    id: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
-
-  // Bulk delete multiple users.
-  // See: https://docs.alekeagle.me/api/admin/account.html#delete-users
-  public deleteUsers(
-    ids: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Create a new domain.
-  // See: https://docs.alekeagle.me/api/admin/domain.html#post-domain
-  public createDomain(
-    domain: string,
-    allowsSubdomains?: boolean
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
-
-  // Update a specific domain.
-  // See: https://docs.alekeagle.me/api/admin/domain.html#patch-domain-id
-  public editDomain(
-    domain: string,
-    allowsSubdomains: boolean
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
-
-  // Delete a specific domain.
-  // See: https://docs.alekeagle.me/api/admin/domain.html#delete-domain-id
-  public deleteDomain(
-    domain: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
-
-  // Bulk delete multiple domains.
-  // See: https://docs.alekeagle.me/api/admin/domain.html#delete-domains
-  public deleteDomains(
-    domains: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Get a list of all files.
-  // See: https://docs.alekeagle.me/api/admin/file.html#get-files
-  public getFiles(
-    limit?: number,
-    offset?: number
-  ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>
-  >;
-
-  // Get a list of all files owned by a specific user.
-  // See: https://docs.alekeagle.me/api/admin/file.html#get-user-id-files
-  public getUserFiles(
-    user: string,
-    limit?: number,
-    offset?: number
-  ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.File>>
-  >;
-
-  // Get a specific file.
-  // See: https://docs.alekeagle.me/api/admin/file.html#get-file-id
-  public getFile(
-    file: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
-
-  // Delete a specific file.
-  // See: https://docs.alekeagle.me/api/admin/file.html#delete-file-id
-  public deleteFile(
-    file: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
-
-  // Bulk delete multiple files.
-  // See: https://docs.alekeagle.me/api/admin/file.html#delete-files
-  public deleteFiles(
-    files: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Delete all files owned by a specific user.
-  // See: https://docs.alekeagle.me/api/admin/file.html#delete-user-id-files-all
-  public deleteAllUserFiles(
-    user: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Create new setup instructions for a specific service.
-  // See: https://docs.alekeagle.me/api/admin/instruction.html#post-instruction
   public createInstruction(
+    id: string,
     name: string,
-    displayName: string,
     description: string,
-    configContent: string,
     steps: string[],
+    content: string,
     filename?: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
-  // Update a specific setup instruction.
-  // See: https://docs.alekeagle.me/api/admin/instruction.html#patch-instruction-id
-  public editInstruction(
-    name: string,
-    data: {
-      displayName?: string;
-      description?: string;
-      fileContent?: string;
-      steps?: string[];
-      filename?: string | null;
-    }
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
-
-  // Delete a specific setup instruction.
-  // See: https://docs.alekeagle.me/api/admin/instruction.html#delete-instruction-id
-  public deleteInstruction(
+  public editInstructionName(
+    id: string,
     name: string
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
-  // Bulk delete multiple setup instructions.
-  // See: https://docs.alekeagle.me/api/admin/instruction.html#delete-instructions
+  public editInstructionDescription(
+    id: string,
+    description: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public editInstructionFile(
+    id: string,
+    content: string,
+    filename?: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public editInstructionSteps(
+    id: string,
+    steps: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+
+  public deleteInstruction(
+    id: string
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
   public deleteInstructions(
-    names: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+    ids: string[]
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
-  // Get a list of all sessions for a specific user.
-  // See: https://docs.alekeagle.me/api/admin/session.html#get-user-id-sessions
-  public getUserSessions(
-    user: string,
-    limit?: number,
-    offset?: number
-  ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.List<Cumulonimbus.Data.Session>>
-  >;
-
-  // Get a specific session of a specific user.
-  // See: https://docs.alekeagle.me/api/admin/session.html#get-user-id-session-sid
-  public getUserSession(
-    user: string,
-    sid: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
-
-  // Delete a specific session of a specific user.
-  // See: https://docs.alekeagle.me/api/admin/session.html#delete-user-id-session-sid
-  public deleteUserSession(
-    user: string,
-    sid: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
-
-  // Bulk delete multiple sessions of a specific user.
-  // See: https://docs.alekeagle.me/api/admin/session.html#delete-user-id-sessions
-  public deleteUserSessions(
-    user: string,
-    sids: string[]
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
-
-  // Delete all sessions of a specific user.
-  // See: https://docs.alekeagle.me/api/admin/session.html#delete-user-id-sessions-all
-  public deleteAllUserSessions(
-    user: string
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.DeleteBulk>>;
+  public upload(
+    file: string | Buffer | File | Blob | ArrayBuffer
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;
 }
 
-export namespace Cumulonimbus {
-  // The default base URL for the API.
-  export const BASE_URL: string;
-  // The default base URL for the thumbnail API.
-  export const BASE_THUMB_URL: string;
-  // The wrapper version.
+declare namespace Cumulonimbus {
+  export const BASE_URL = "https://alekeagle.me/api";
+  export const BASE_THUMBNAIL_URL = "https://previews.alekeagle.me";
   export const VERSION: string;
 
-  // The structure of ratelimit data from the API.
   export interface RatelimitData {
-    max: number;
+    limit: number;
     remaining: number;
     reset: number;
   }
 
-  // Options for the API wrapper.
   export interface ClientOptions {
     baseURL?: string;
     baseThumbnailURL?: string;
   }
 
-  // Options for API requests. These are not normally used outside of the wrapper.
   export interface APICallRequestInit extends RequestInit {
     baseURL?: string;
     baseThumbnailURL?: string;
   }
 
-  // The structure of API responses.
   export interface APIResponse<T> {
     result: T;
     ratelimit: RatelimitData | null;
     response: Response;
   }
 
-  // Various data structures used and returned by the API.
   export namespace Data {
-    // The structure of a list of items.
+    export interface User {
+      id: string;
+      username: string;
+      email: string;
+      verified: boolean;
+      staff: boolean;
+      domain: string;
+      subdomain: string | null;
+      bannedAt: string | null;
+      createdAt: string;
+      updatedAt: string;
+    }
+
+    export interface Session {
+      id: number;
+      exp: number;
+      name: string;
+    }
+
     export interface List<T> {
       count: number;
       items: T[];
     }
 
-    // The structure of an API error.
-    export interface Error {
-      code: string;
-      message: string;
-    }
-
-    // The structure of an API success.
     export interface Success {
-      code: string;
-      message?: string;
+      code: keyof SuccessCode;
+      message: SuccessCode[keyof SuccessCode];
+      count?: number;
     }
 
-    // The structure of a user.
-    export interface User {
-      id: string;
-      username: string;
-      email: string;
-      staff: boolean;
-      domain: string;
-      subdomain?: string;
-      bannedAt?: string;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    // The structure of a session.
-    export interface Session {
-      iat: number;
-      exp: number;
-      sub: string;
-      name: string;
-    }
-
-    // The structure of a domain.
-    export interface Domain {
-      domain: string;
-      allowsSubdomains: boolean;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    // The structure of a slim domain.
-    export type DomainSlim = Omit<Domain, "createdAt" | "updatedAt">;
-
-    // The structure of a file.
-    export interface File {
-      filename: string;
-      createdAt: string;
-      updatedAt: string;
-      userID: string;
-      size: number;
-    }
-
-    // The structure of a bulk delete.
-    export interface DeleteBulk {
-      count: number;
-      type: "user" | "session" | "file" | "domain" | "instruction";
-    }
-
-    // The structure of a setup instruction.
     export interface Instruction {
+      id: string;
       name: string;
+      description: string;
       steps: string[];
       filename: string;
-      fileContent: string;
-      description: string;
-      displayName: string;
+      content: string;
       createdAt: string;
       updatedAt: string;
     }
 
-    // The structure of a successful authentication.
+    export interface Domain {
+      id: string;
+      subdomains: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }
+
+    export interface Error {
+      code: keyof ErrorCode;
+      message: ErrorCode[keyof ErrorCode];
+      fields?: string[];
+    }
+
     export interface SuccessfulAuth {
       token: string;
       exp: number;
     }
 
-    // The structure of a successful upload.
+    export interface File {
+      id: string;
+      userID: string;
+      size: number;
+      createdAt: string;
+      updatedAt: string;
+    }
+
     export interface SuccessfulUpload {
       url: string;
       thumbnail: string;
       manage: string;
     }
 
-    // The structure of a API sanity check.
-    export interface SanityCheck {
+    export interface APIStatus {
       version: string;
       hello: "world";
     }
   }
 
-  // All error codes and possible messages returned by the API.
   export interface ErrorCode {
-    INSUFFICIENT_PERMISSIONS_ERROR: "Missing Permissions";
+    INSUFFICIENT_PERMISSIONS_ERROR: "Insufficient Permissions";
     INVALID_USER_ERROR: "Invalid User";
+    INVALID_USERNAME_ERROR: "Invalid Username";
     INVALID_PASSWORD_ERROR: "Invalid Password";
+    PASSWORDS_DO_NOT_MATCH_ERROR: "Passwords Do Not Match";
+    INVALID_EMAIL_ERROR: "Invalid Email";
     INVALID_SESSION_ERROR: "Invalid Session";
     INVALID_DOMAIN_ERROR: "Invalid Domain";
-    INVALID_SUBDOMAIN_ERROR: "Invalid Subdomain";
+    SUBDOMAIN_TOO_LONG_ERROR: "Subdomain Too Long";
     INVALID_FILE_ERROR: "Invalid File";
     INVALID_INSTRUCTION_ERROR: "Invalid Instruction";
     INVALID_ENDPOINT_ERROR: "Invalid Endpoint";
-    SUBDOMAIN_NOT_SUPPORTED_ERROR: "Subdomain Not Supported";
+    SUBDOMAIN_NOT_ALLOWED_ERROR: "Subdomain Not Allowed";
     DOMAIN_EXISTS_ERROR: "Domain Exists";
     USER_EXISTS_ERROR: "User Exists";
     INSTRUCTION_EXISTS_ERROR: "Instruction Exists";
@@ -585,20 +418,29 @@ export namespace Cumulonimbus {
     BODY_TOO_LARGE_ERROR: "Body Too Large";
     RATELIMITED_ERROR: "You Have Been Ratelimited. Please Try Again Later.";
     INTERNAL_ERROR: "Internal Server Error";
-    GENERIC_ERROR: "";
   }
 
-  // The error that is thrown when an API call fails.
+  export interface SuccessCode {
+    DELETE_USER_SUCCESS: "User Successfully Deleted";
+    DELETE_USERS_SUCCESS: "Users Successfully Deleted";
+    DELETE_FILE_SUCCESS: "File Successfully Deleted";
+    DELETE_FILES_SUCCESS: "Files Successfully Deleted";
+    DELETE_SESSION_SUCCESS: "Session Successfully Deleted";
+    DELETE_SESSIONS_SUCCESS: "Sessions Successfully Deleted";
+    DELETE_DOMAIN_SUCCESS: "Domain Successfully Deleted";
+    DELETE_DOMAINS_SUCCESS: "Domains Successfully Deleted";
+    DELETE_INSTRUCTION_SUCCESS: "Instruction Successfully Deleted";
+    DELETE_INSTRUCTIONS_SUCCESS: "Instructions Successfully Deleted";
+  }
+
   export class ResponseError extends Error implements Data.Error {
     code: keyof ErrorCode;
     message: ErrorCode[keyof ErrorCode];
     ratelimit: RatelimitData | null;
-    parsedSubdomain?: string;
     fields?: string[];
-    constructor(response: Data.Error, ratelimit?: RatelimitData | null);
+    constructor(response: Data.Error, ratelimit: RatelimitData | null);
   }
 
-  // The error that is thrown when fetching a thumbnail fails.
   export class ThumbnailError extends Error {
     code: number;
     message: string;

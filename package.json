@@ -2,10 +2,13 @@
   "name": "cumulonimbus-wrapper",
   "version": "2.4.0",
   "description": "A wrapper for the Cumulonimbus API.",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "tsc ; node dist/test/index.js"
+  "type": "module",
+  "exports": {
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/loader.js"
   },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "types": "index.d.ts",
   "repository": {
     "type": "git",
@@ -21,8 +24,8 @@
   },
   "homepage": "https://github.com/AlekEagle/cumulonimbus-wrapper#readme",
   "devDependencies": {
-    "@types/node": "^18.15.11",
-    "typescript": "^5.0.4"
+    "@types/node": "^20.3.2",
+    "typescript": "^5.1.6"
   },
   "engines": {
     "node": ">=18.0.0"
