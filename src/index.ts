@@ -53,11 +53,11 @@ class Cumulonimbus {
 
     let ratelimit: Cumulonimbus.RatelimitData | null = null;
 
-    if (res.headers.get("RateLimit-Limit")) {
+    if (res.headers.get("Ratelimit-Limit")) {
       ratelimit = {
-        limit: Number(res.headers.get("RateLimit-Limit")),
-        remaining: Number(res.headers.get("RateLimit-Remaining")),
-        reset: Number(res.headers.get("RateLimit-Reset")),
+        limit: Number(res.headers.get("Ratelimit-Limit")),
+        remaining: Number(res.headers.get("Ratelimit-Remaining")),
+        reset: Number(res.headers.get("Ratelimit-Reset")),
       };
     }
 
@@ -190,11 +190,11 @@ class Cumulonimbus {
 
     let ratelimit: Cumulonimbus.RatelimitData | null = null;
 
-    if (res.headers.get("RateLimit-Limit")) {
+    if (res.headers.get("Ratelimit-Limit")) {
       ratelimit = {
-        limit: Number(res.headers.get("RateLimit-Limit")),
-        remaining: Number(res.headers.get("RateLimit-Remaining")),
-        reset: Number(res.headers.get("RateLimit-Reset")),
+        limit: Number(res.headers.get("Ratelimit-Limit")),
+        remaining: Number(res.headers.get("Ratelimit-Remaining")),
+        reset: Number(res.headers.get("Ratelimit-Reset")),
       };
     }
 
@@ -238,11 +238,11 @@ class Cumulonimbus {
 
     let ratelimit: Cumulonimbus.RatelimitData | null = null;
 
-    if (res.headers.get("RateLimit-Limit")) {
+    if (res.headers.get("Ratelimit-Limit")) {
       ratelimit = {
-        limit: Number(res.headers.get("RateLimit-Limit")),
-        remaining: Number(res.headers.get("RateLimit-Remaining")),
-        reset: Number(res.headers.get("RateLimit-Reset")),
+        limit: Number(res.headers.get("Ratelimit-Limit")),
+        remaining: Number(res.headers.get("Ratelimit-Remaining")),
+        reset: Number(res.headers.get("Ratelimit-Reset")),
       };
     }
 
