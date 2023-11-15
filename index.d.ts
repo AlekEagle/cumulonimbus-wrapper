@@ -12,13 +12,13 @@ declare class Cumulonimbus {
   // The generic API call method used throughout the wrapper.
   private call<T>(
     url: string,
-    options?: Cumulonimbus.APICallRequestInit
+    options?: Cumulonimbus.APICallRequestInit,
   ): Promise<Cumulonimbus.APIResponse<T>>;
 
   //Similar to the generic API call method, but it includes credentials in the request.
   private authenticatedCall<T>(
     url: string,
-    options?: Cumulonimbus.APICallRequestInit
+    options?: Cumulonimbus.APICallRequestInit,
   ): Promise<Cumulonimbus.APIResponse<T>>;
 
   // A method to manufacture callables for the API.
@@ -26,13 +26,13 @@ declare class Cumulonimbus {
     endpointTemplate: string | ((...args: T) => string),
     method: string,
     headers?: { [key: string]: string },
-    bodyTemplate?: string | null | ((...args: T) => string)
+    bodyTemplate?: string | null | ((...args: T) => string),
   ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
 
   // Similar to manufactureMethod, but is only used for GET requests and does not include the bodyTemplate parameter.
   private manufactureMethodGet<T extends any[], M>(
     endpointTemplate: string | ((...args: T) => string),
-    headers?: { [key: string]: string }
+    headers?: { [key: string]: string },
   ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
 
   public static login(
@@ -40,7 +40,7 @@ declare class Cumulonimbus {
     password: string,
     rememberMe?: boolean,
     options?: Cumulonimbus.ClientOptions,
-    tokenName?: string
+    tokenName?: string,
   ): Promise<Cumulonimbus>;
 
   public static register(
@@ -49,201 +49,215 @@ declare class Cumulonimbus {
     password: string,
     repeatPassword: string,
     rememberMe?: boolean,
-    options?: Cumulonimbus.ClientOptions
+    options?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus>;
 
   public static getAPIStatus(
-    options?: Cumulonimbus.ClientOptions
+    options?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus>;
 
   public static getThumbnailAPIStatus(
-    options?: Cumulonimbus.ClientOptions
+    options?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus>;
 
   public getThumbnail(
-    id: string | Cumulonimbus.Data.File
+    id: string | Cumulonimbus.Data.File,
   ): Promise<ArrayBuffer>;
 
   public getSession(
     sid?: string,
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
 
   public getSessions(
     uid?: string,
     limit?: number,
-    offset?: number
+    offset?: number,
   ): Promise<
     Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, "exp">>
+      Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, 'exp'>>
     >
   >;
 
   public deleteSession(
     sid: string,
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteSessions(
     sids: string[],
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteAllSessions(
     uid?: string,
-    includeSelf?: boolean
+    includeSelf?: boolean,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public getUsers(
     limit?: number,
-    offset?: number
+    offset?: number,
   ): Promise<
     Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, "id" | "username">>
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, 'id' | 'username'>>
     >
   >;
 
   public getUser(
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public editUsername(
     username: string,
     password?: string,
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public editEmail(
     email: string,
     password?: string,
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
+
+  public verifyEmail(
+    uid: string,
+    token?: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public resendVerificationEmail(
+    uid?: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+
+  public unverifyEmail(
+    uid: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public editPassword(
     newPassword: string,
     confirmNewPassword: string,
     oldPassword?: string,
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public grantStaff(
-    uid: string
+    uid: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public revokeStaff(
-    uid: string
+    uid: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public banUser(
-    uid: string
+    uid: string,
+    reason: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public unbanUser(
-    uid: string
+    uid: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public editDomainSelection(
     domain: string,
     subdomain?: string,
-    uid?: string
+    uid?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public deleteUser(
     uid?: string,
     username?: string,
-    password?: string
+    password?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteUsers(
-    uids: string[]
+    uids: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public getDomains(
-    limit?: "all" | number,
-    offset?: number
+    limit?: 'all' | number,
+    offset?: number,
   ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<
-        Extract<Cumulonimbus.Data.Domain, "id" | "subdomains">
+        Extract<Cumulonimbus.Data.Domain, 'id' | 'subdomains'>
       >
     >
   >;
 
   public getDomain(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
   public createDomain(
     id: string,
-    subdomains?: boolean
+    subdomains?: boolean,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
   public allowSubdomains(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
   public disallowSubdomains(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
   public deleteDomain(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteDomains(
-    ids: string[]
+    ids: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public getFiles(
     uid?: string,
     limit?: number,
-    offset?: number
+    offset?: number,
   ): Promise<
     Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, "id" | "name">>
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
     >
   >;
 
   public getFile(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   public editFilename(
     id: string,
-    name?: string
+    name?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   public editFileExtension(
     id: string,
-    extension: string
+    extension: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   public deleteFile(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteFiles(
-    ids: string[]
+    ids: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteAllFiles(
     user?: string,
-    password?: string
+    password?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public getInstructions(
     limit?: number,
-    offset?: number
+    offset?: number,
   ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<
-        Extract<Cumulonimbus.Data.Instruction, "id" | "name" | "description">
+        Extract<Cumulonimbus.Data.Instruction, 'id' | 'name' | 'description'>
       >
     >
   >;
 
   public getInstruction(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
   public createInstruction(
@@ -252,46 +266,46 @@ declare class Cumulonimbus {
     description: string,
     steps: string[],
     content: string,
-    filename?: string
+    filename?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
   public editInstructionName(
     id: string,
-    name: string
+    name: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
   public editInstructionDescription(
     id: string,
-    description: string
+    description: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
   public editInstructionFile(
     id: string,
     content: string,
-    filename?: string
+    filename?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
   public editInstructionSteps(
     id: string,
-    steps: string[]
+    steps: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
   public deleteInstruction(
-    id: string
+    id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public deleteInstructions(
-    ids: string[]
+    ids: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   public upload(
-    file: string | Buffer | File | Blob | ArrayBuffer
+    file: string | Buffer | File | Blob | ArrayBuffer,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;
 }
 
 declare namespace Cumulonimbus {
-  export const BASE_URL = "https://alekeagle.me/api";
-  export const BASE_THUMBNAIL_URL = "https://previews.alekeagle.me";
+  export const BASE_URL = 'https://alekeagle.me/api';
+  export const BASE_THUMBNAIL_URL = 'https://previews.alekeagle.me';
   export const VERSION: string;
 
   export interface RatelimitData {
@@ -393,45 +407,45 @@ declare namespace Cumulonimbus {
 
     export interface APIStatus {
       version: string;
-      hello: "world";
+      hello: 'world';
     }
   }
 
   export interface ErrorCode {
-    INSUFFICIENT_PERMISSIONS_ERROR: "Insufficient Permissions";
-    INVALID_USER_ERROR: "Invalid User";
-    INVALID_USERNAME_ERROR: "Invalid Username";
-    INVALID_PASSWORD_ERROR: "Invalid Password";
-    PASSWORDS_DO_NOT_MATCH_ERROR: "Passwords Do Not Match";
-    INVALID_EMAIL_ERROR: "Invalid Email";
-    INVALID_SESSION_ERROR: "Invalid Session";
-    INVALID_DOMAIN_ERROR: "Invalid Domain";
-    SUBDOMAIN_TOO_LONG_ERROR: "Subdomain Too Long";
-    INVALID_FILE_ERROR: "Invalid File";
-    INVALID_INSTRUCTION_ERROR: "Invalid Instruction";
-    INVALID_ENDPOINT_ERROR: "Invalid Endpoint";
-    SUBDOMAIN_NOT_ALLOWED_ERROR: "Subdomain Not Allowed";
-    DOMAIN_EXISTS_ERROR: "Domain Exists";
-    USER_EXISTS_ERROR: "User Exists";
-    INSTRUCTION_EXISTS_ERROR: "Instruction Exists";
-    MISSING_FIELDS_ERROR: "Missing Fields";
-    BANNED_ERROR: "Banned";
-    BODY_TOO_LARGE_ERROR: "Body Too Large";
-    RATELIMITED_ERROR: "You Have Been Ratelimited. Please Try Again Later.";
-    INTERNAL_ERROR: "Internal Server Error";
+    INSUFFICIENT_PERMISSIONS_ERROR: 'Insufficient Permissions';
+    INVALID_USER_ERROR: 'Invalid User';
+    INVALID_USERNAME_ERROR: 'Invalid Username';
+    INVALID_PASSWORD_ERROR: 'Invalid Password';
+    PASSWORDS_DO_NOT_MATCH_ERROR: 'Passwords Do Not Match';
+    INVALID_EMAIL_ERROR: 'Invalid Email';
+    INVALID_SESSION_ERROR: 'Invalid Session';
+    INVALID_DOMAIN_ERROR: 'Invalid Domain';
+    SUBDOMAIN_TOO_LONG_ERROR: 'Subdomain Too Long';
+    INVALID_FILE_ERROR: 'Invalid File';
+    INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
+    INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
+    SUBDOMAIN_NOT_ALLOWED_ERROR: 'Subdomain Not Allowed';
+    DOMAIN_EXISTS_ERROR: 'Domain Exists';
+    USER_EXISTS_ERROR: 'User Exists';
+    INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
+    MISSING_FIELDS_ERROR: 'Missing Fields';
+    BANNED_ERROR: 'Banned';
+    BODY_TOO_LARGE_ERROR: 'Body Too Large';
+    RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
+    INTERNAL_ERROR: 'Internal Server Error';
   }
 
   export interface SuccessCode {
-    DELETE_USER_SUCCESS: "User Successfully Deleted";
-    DELETE_USERS_SUCCESS: "Users Successfully Deleted";
-    DELETE_FILE_SUCCESS: "File Successfully Deleted";
-    DELETE_FILES_SUCCESS: "Files Successfully Deleted";
-    DELETE_SESSION_SUCCESS: "Session Successfully Deleted";
-    DELETE_SESSIONS_SUCCESS: "Sessions Successfully Deleted";
-    DELETE_DOMAIN_SUCCESS: "Domain Successfully Deleted";
-    DELETE_DOMAINS_SUCCESS: "Domains Successfully Deleted";
-    DELETE_INSTRUCTION_SUCCESS: "Instruction Successfully Deleted";
-    DELETE_INSTRUCTIONS_SUCCESS: "Instructions Successfully Deleted";
+    DELETE_USER_SUCCESS: 'User Successfully Deleted';
+    DELETE_USERS_SUCCESS: 'Users Successfully Deleted';
+    DELETE_FILE_SUCCESS: 'File Successfully Deleted';
+    DELETE_FILES_SUCCESS: 'Files Successfully Deleted';
+    DELETE_SESSION_SUCCESS: 'Session Successfully Deleted';
+    DELETE_SESSIONS_SUCCESS: 'Sessions Successfully Deleted';
+    DELETE_DOMAIN_SUCCESS: 'Domain Successfully Deleted';
+    DELETE_DOMAINS_SUCCESS: 'Domains Successfully Deleted';
+    DELETE_INSTRUCTION_SUCCESS: 'Instruction Successfully Deleted';
+    DELETE_INSTRUCTIONS_SUCCESS: 'Instructions Successfully Deleted';
   }
 
   export class ResponseError extends Error implements Data.Error {
