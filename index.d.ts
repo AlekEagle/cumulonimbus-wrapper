@@ -335,10 +335,10 @@ declare namespace Cumulonimbus {
       id: string;
       username: string;
       email: string;
-      verified: boolean;
       staff: boolean;
       domain: string;
       subdomain: string | null;
+      verifiedAt: string | null;
       bannedAt: string | null;
       createdAt: string;
       updatedAt: string;
@@ -418,6 +418,9 @@ declare namespace Cumulonimbus {
     INVALID_PASSWORD_ERROR: 'Invalid Password';
     PASSWORDS_DO_NOT_MATCH_ERROR: 'Passwords Do Not Match';
     INVALID_EMAIL_ERROR: 'Invalid Email';
+    EMAIL_NOT_VERIFIED_ERROR: 'Email Not Verified';
+    EMAIL_ALREADY_VERIFIED_ERROR: 'Email Already Verified';
+    INVALID_VERIFICATION_TOKEN_ERROR: 'Invalid Verification Token';
     INVALID_SESSION_ERROR: 'Invalid Session';
     INVALID_DOMAIN_ERROR: 'Invalid Domain';
     SUBDOMAIN_TOO_LONG_ERROR: 'Subdomain Too Long';
@@ -446,6 +449,7 @@ declare namespace Cumulonimbus {
     DELETE_DOMAINS_SUCCESS: 'Domains Successfully Deleted';
     DELETE_INSTRUCTION_SUCCESS: 'Instruction Successfully Deleted';
     DELETE_INSTRUCTIONS_SUCCESS: 'Instructions Successfully Deleted';
+    SEND_VERIFICATION_EMAIL_SUCCESS: 'Verification Email Successfully Sent';
   }
 
   export class ResponseError extends Error implements Data.Error {
