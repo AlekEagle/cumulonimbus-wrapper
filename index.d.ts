@@ -122,7 +122,7 @@ declare class Cumulonimbus {
   public verifyEmail(
     uid: string,
     token?: string,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public resendVerificationEmail(
     uid?: string,
@@ -130,7 +130,7 @@ declare class Cumulonimbus {
 
   public unverifyEmail(
     uid: string,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public editPassword(
     newPassword: string,
