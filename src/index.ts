@@ -1,5 +1,5 @@
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '3.0.3';
+const version = '3.2.0';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -35,6 +35,20 @@ class Cumulonimbus {
     this.options = options || {};
   }
 
+  //  Get the ratelimit headers from a response
+  private static getRatelimitHeaders(
+    res: Response,
+  ): Cumulonimbus.RatelimitData | null {
+    if (res.headers.get('Ratelimit-Limit')) {
+      return {
+        limit: Number(res.headers.get('Ratelimit-Limit')),
+        remaining: Number(res.headers.get('Ratelimit-Remaining')),
+        reset: Number(res.headers.get('Ratelimit-Reset')),
+      };
+    } else return null;
+  }
+
+  // Call an endpoint from the Cumulonimbus API
   private async call<T>(
     endpoint: string,
     options: Cumulonimbus.APICallRequestInit = {},
@@ -51,17 +65,9 @@ class Cumulonimbus {
       opts,
     );
 
-    let ratelimit: Cumulonimbus.RatelimitData | null = null;
+    let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
-    if (res.headers.get('Ratelimit-Limit')) {
-      ratelimit = {
-        limit: Number(res.headers.get('Ratelimit-Limit')),
-        remaining: Number(res.headers.get('Ratelimit-Remaining')),
-        reset: Number(res.headers.get('Ratelimit-Reset')),
-      };
-    }
-
-    // Check if the response is a 413, and if so, construct a new BODY_TOO_LARGE error, as we can't be sure the server returns a proper error
+    // Check if the response is a 413, and if so, construct a new BODY_TOO_LARGE error, as we can't be sure the server returns a proper error (Thanks, Cloudflare!)
     if (res.status === 413) {
       throw new Cumulonimbus.ResponseError(
         {
@@ -77,18 +83,12 @@ class Cumulonimbus {
       if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
       else return { result: json, ratelimit, response: res };
     } catch (error) {
-      if (error instanceof Cumulonimbus.ResponseError) throw error;
-      else
-        throw new Cumulonimbus.ResponseError(
-          {
-            code: 'INTERNAL_ERROR',
-            message: 'Internal Server Error',
-          },
-          ratelimit,
-        );
+      // If we error for whatever reason, just throw the error we catch.
+      throw error;
     }
   }
 
+  // Call an endpoint from the Cumulonimbus API, but with an Authorization header
   private async authenticatedCall<T>(
     url: string,
     options: Cumulonimbus.APICallRequestInit = {},
@@ -101,6 +101,7 @@ class Cumulonimbus {
     return this.call<T>(url, opts);
   }
 
+  // Our factory method for creating methods
   private manufactureMethod<T extends any[], M>(
     endpointTemplate: string | ((...args: T) => string),
     method: string,
@@ -130,6 +131,7 @@ class Cumulonimbus {
     };
   }
 
+  // Our factory method for creating GET methods
   private manufactureMethodGet<T extends any[], M>(
     endpointTemplate: string | ((...args: T) => string),
     headers: { [key: string]: string } = {},
@@ -137,6 +139,7 @@ class Cumulonimbus {
     return this.manufactureMethod<T, M>(endpointTemplate, 'GET', headers, null);
   }
 
+  // Convert an object to a query string
   private toQueryString(params: {
     [key: string]: string | number | boolean;
   }): string {
@@ -162,57 +165,50 @@ class Cumulonimbus {
       );
   }
 
-  public static async login(
-    username: string,
-    password: string,
-    rememberMe: boolean = false,
-    options?: Cumulonimbus.ClientOptions,
-    tokenName?: string,
-  ): Promise<Cumulonimbus> {
+  public static async login(options: {
+    username: string;
+    password: string;
+    rememberMe?: boolean;
+    tokenName?: string;
+    clientOptions?: Cumulonimbus.ClientOptions;
+  }): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
       'User-Agent': USER_AGENT,
     };
-    if (tokenName) headers['X-Token-Name'] = tokenName;
+    if (options.tokenName) headers['X-Token-Name'] = options.tokenName;
     const res = await fetch(
-      (options && options.baseURL ? options.baseURL : Cumulonimbus.BASE_URL) +
-        '/login',
+      (options && options.clientOptions.baseURL
+        ? options.clientOptions.baseURL
+        : Cumulonimbus.BASE_URL) + '/login',
       {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          username,
-          password,
-          rememberMe,
+          username: options.username,
+          password: options.password,
+          rememberMe: options.rememberMe || false,
         }),
       },
     );
 
-    let ratelimit: Cumulonimbus.RatelimitData | null = null;
-
-    if (res.headers.get('Ratelimit-Limit')) {
-      ratelimit = {
-        limit: Number(res.headers.get('Ratelimit-Limit')),
-        remaining: Number(res.headers.get('Ratelimit-Remaining')),
-        reset: Number(res.headers.get('Ratelimit-Reset')),
-      };
-    }
+    let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
     const json = await res.json();
 
     if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
 
-    return new Cumulonimbus(json.token, options);
+    return new Cumulonimbus(json.token, options.clientOptions);
   }
 
-  public static async register(
-    username: string,
-    email: string,
-    password: string,
-    confirmPassword: string,
-    rememberMe: boolean = false,
-    options?: Cumulonimbus.ClientOptions,
-  ): Promise<Cumulonimbus> {
+  public static async register(options: {
+    username: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    rememberMe?: boolean;
+    clientOptions?: Cumulonimbus.ClientOptions;
+  }): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
       'User-Agent':
@@ -221,46 +217,39 @@ class Cumulonimbus {
           : `Cumulonimbus-Wrapper/${version}`,
     };
     const res = await fetch(
-      (options && options.baseURL ? options.baseURL : Cumulonimbus.BASE_URL) +
-        '/register',
+      (options.clientOptions && options.clientOptions.baseURL
+        ? options.clientOptions.baseURL
+        : Cumulonimbus.BASE_URL) + '/register',
       {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          username,
-          email,
-          password,
-          confirmPassword,
-          rememberMe,
+          username: options.username,
+          email: options.email,
+          password: options.password,
+          confirmPassword: options.confirmPassword,
+          rememberMe: options.rememberMe || false,
         }),
       },
     );
 
-    let ratelimit: Cumulonimbus.RatelimitData | null = null;
-
-    if (res.headers.get('Ratelimit-Limit')) {
-      ratelimit = {
-        limit: Number(res.headers.get('Ratelimit-Limit')),
-        remaining: Number(res.headers.get('Ratelimit-Remaining')),
-        reset: Number(res.headers.get('Ratelimit-Reset')),
-      };
-    }
+    let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
     const json = await res.json();
 
     if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
 
-    return new Cumulonimbus(json.token, options);
+    return new Cumulonimbus(json.token, options.clientOptions);
   }
 
   // API Status Methods
 
   public static async getAPIStatus(
-    options?: Cumulonimbus.ClientOptions,
+    clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus> {
     const res = await fetch(
-      options && options.baseURL
-        ? options.baseURL
+      clientOptions && clientOptions.baseURL
+        ? clientOptions.baseURL
         : Cumulonimbus.BASE_URL + '/',
     );
     if (!res.ok)
@@ -272,11 +261,11 @@ class Cumulonimbus {
   }
 
   public static async getThumbnailAPIStatus(
-    options?: Cumulonimbus.ClientOptions,
+    clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus> {
     const res = await fetch(
-      options && options.baseThumbnailURL
-        ? options.baseThumbnailURL
+      clientOptions && clientOptions.baseThumbnailURL
+        ? clientOptions.baseThumbnailURL
         : Cumulonimbus.BASE_THUMBNAIL_URL + '/',
     );
     if (!res.ok)
@@ -286,6 +275,8 @@ class Cumulonimbus {
       });
     else return await res.json();
   }
+
+  //-- Instance Methods --//
 
   // Get Thumbnail
 
@@ -298,98 +289,181 @@ class Cumulonimbus {
     else return await res.arrayBuffer();
   }
 
+  // Status Methods, but for the instance, eliminating the need to pass in options
+  public getAPIStatus = (function () {
+    return Cumulonimbus.getAPIStatus.bind(null, this.options);
+  })();
+
+  public getThumbnailAPIStatus = (function () {
+    return Cumulonimbus.getThumbnailAPIStatus.bind(null, this.options);
+  })();
+
   // Session Methods
   public getSession = this.manufactureMethodGet<
-    [string | undefined, string | undefined],
+    [
+      | undefined
+      | string
+      | { session?: string; user: undefined }
+      | { session: string; user: string },
+    ],
     Cumulonimbus.Data.Session
-  >((sid, uid) => `/users/${uid || 'me'}/sessions/${sid || 'me'}`);
+  >((options) => {
+    if (typeof options === 'string') {
+      return `/users/me/sessions/${options}`;
+    } else {
+      return `/users/${options.user || 'me'}/sessions/${options.session}`;
+    }
+  });
 
   public getSessions = this.manufactureMethodGet<
-    [string | undefined, number | undefined, number | undefined],
+    [undefined | { user?: string; limit?: number; offset?: number }],
     Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, 'exp'>>
   >(
-    (uid, limit, offset) =>
-      `/users/${uid || 'me'}/sessions${this.toQueryString({ limit, offset })}`,
+    (options) =>
+      `/users/${options.user || 'me'}/sessions${this.toQueryString({
+        limit: options.limit,
+        offset: options.offset,
+      })}`,
   );
 
   public deleteSession = this.manufactureMethod<
-    [string, string | undefined],
+    [
+      | string
+      | { session: string; user: undefined }
+      | { session: string; user: string },
+    ],
     Cumulonimbus.Data.Success
-  >((sid, uid) => `/users/${uid || 'me'}/sessions/${sid || 'me'}`, 'DELETE');
+  >((options) => {
+    switch (typeof options) {
+      case 'string':
+        return `/users/me/sessions/${options}`;
+      case 'object':
+        return `/users/${options.user || 'me'}/sessions/${options.session}`;
+    }
+  }, 'DELETE');
 
   public deleteSessions = this.manufactureMethod<
-    [string[], string | undefined],
+    [
+      string[], // Array of session IDs
+      string, // User ID
+    ],
     Cumulonimbus.Data.Success
   >(
-    (_, uid) => `/users/${uid || 'me'}/sessions`,
+    (_, user) => `/users/${user}/sessions`,
     'DELETE',
     WITH_BODY,
-    (sids, uid) => {
-      return JSON.stringify({ sids });
+    (sessionIDs) => {
+      return JSON.stringify({ sids: sessionIDs });
     },
   );
 
   public deleteAllSessions = this.manufactureMethod<
-    [string | undefined, boolean | undefined],
+    [undefined | string | boolean],
     Cumulonimbus.Data.Success
-  >(
-    (uid, includeSelf) =>
-      `/users/${uid || 'me'}/sessions/all?include-self=${includeSelf || false}`,
-    'DELETE',
-  );
+  >((userOrIncludeSelf) => {
+    switch (typeof userOrIncludeSelf) {
+      case 'string':
+        return `/users/${userOrIncludeSelf}/sessions/all`;
+      case 'boolean':
+        return `/users/me/sessions/all${this.toQueryString({
+          includeSelf: userOrIncludeSelf,
+        })}`;
+      default:
+        return `/users/me/sessions/all`;
+    }
+  }, 'DELETE');
 
   // User Methods
 
   public getUsers = this.manufactureMethodGet<
-    [number | undefined, number | undefined],
+    [{ limit?: number; offset?: number } | undefined],
     Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, 'id' | 'username'>>
-  >((limit, offset) => `/users${this.toQueryString({ limit, offset })}`);
+  >((options) => `/users${this.toQueryString(options)}`);
 
   public getUser = this.manufactureMethodGet<
     [string | undefined],
     Cumulonimbus.Data.User
-  >((uid) => `/users/${uid || 'me'}`);
+  >((user) => `/users/${user || 'me'}`);
 
   public editUsername = this.manufactureMethod<
-    [string, string | undefined, string | undefined],
+    [
+      | {
+          username: string;
+          password: string;
+          user: undefined;
+        }
+      | {
+          username: string;
+          password: undefined;
+          user: string;
+        },
+    ],
     Cumulonimbus.Data.User
   >(
-    (username, password, uid) => `/users/${uid || 'me'}/username`,
+    (options) => `/users/${options.user || 'me'}/username`,
     'PUT',
     WITH_BODY,
-    (username, password, uid) => {
-      return JSON.stringify({ username, password });
+    (options) => {
+      return JSON.stringify({
+        username: options.username,
+        password: options.password,
+      });
     },
   );
 
   public editEmail = this.manufactureMethod<
-    [string, string | undefined, string | undefined],
+    [
+      | {
+          email: string;
+          password: string;
+          user: undefined;
+        }
+      | {
+          email: string;
+          password: undefined;
+          user: string;
+        },
+    ],
     Cumulonimbus.Data.User
   >(
-    (email, password, uid) => `/users/${uid || 'me'}/email`,
+    (options) => `/users/${options.user || 'me'}/email`,
     'PUT',
     WITH_BODY,
-    (email, password, uid) => {
-      return JSON.stringify({ email, password });
+    (options) => {
+      return JSON.stringify({
+        email: options.email,
+        password: options.password,
+      });
     },
   );
 
   public verifyEmail = this.manufactureMethod<
-    [string, string | undefined],
+    [
+      | {
+          user: undefined;
+          token: string;
+        }
+      | {
+          user: string;
+          token: undefined;
+        },
+    ],
     Cumulonimbus.Data.User
   >(
-    (uid) => `/users/${uid || 'me'}/verify`,
+    (options) => `/users/${options.user || 'me'}/verify`,
     'PUT',
     WITH_BODY,
-    (uid, token) => {
-      return !!token ? JSON.stringify({ token }) : undefined;
+    (options) => {
+      return JSON.stringify({
+        token: options.token,
+      });
     },
   );
 
   public resendVerificationEmail = this.manufactureMethodGet<
     [string | undefined],
     Cumulonimbus.Data.Success
-  >((uid) => `/users/${uid || 'me'}/verify`);
+  >((user) => `/users/${user || 'me'}/verify`);
 
   public unverifyEmail = this.manufactureMethod<
     [string],
@@ -397,29 +471,41 @@ class Cumulonimbus {
   >((uid) => `/users/${uid}/verify`, 'DELETE');
 
   public editPassword = this.manufactureMethod<
-    [string, string, string | undefined, string | undefined],
+    [
+      | {
+          newPassword: string;
+          confirmNewPassword: string;
+          oldPassword: string;
+          user: undefined;
+        }
+      | {
+          newPassword: string;
+          confirmNewPassword: string;
+          oldPassword: undefined;
+          user: string;
+        },
+    ],
     Cumulonimbus.Data.User
   >(
-    (newPassword, confirmNewPassword, oldPassword, uid) =>
-      `/users/${uid || 'me'}/password`,
+    (options) => `/users/${options.user || 'me'}/password`,
     'PUT',
     WITH_BODY,
-    (newPassword, confirmNewPassword, oldPassword, uid) => {
+    (options) => {
       return JSON.stringify({
-        newPassword,
-        confirmNewPassword,
-        password: oldPassword,
+        newPassword: options.newPassword,
+        confirmNewPassword: options.confirmNewPassword,
+        password: options.oldPassword,
       });
     },
   );
 
   public grantStaff = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (uid) => `/users/${uid}/staff`,
+    (user) => `/users/${user}/staff`,
     'PUT',
   );
 
   public revokeStaff = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (uid) => `/users/${uid}/staff`,
+    (user) => `/users/${user}/staff`,
     'DELETE',
   );
 
@@ -427,16 +513,16 @@ class Cumulonimbus {
     [string, string],
     Cumulonimbus.Data.User
   >(
-    (uid) => `/users/${uid}/ban`,
+    (user) => `/users/${user}/ban`,
     'PUT',
     WITH_BODY,
-    (uid, reason) => {
+    (_, reason) => {
       return JSON.stringify({ reason });
     },
   );
 
   public unbanUser = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (uid) => `/users/${uid}/ban`,
+    (user) => `/users/${user}/ban`,
     'DELETE',
   );
 

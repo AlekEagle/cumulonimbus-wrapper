@@ -1,159 +1,290 @@
-// The Cumulonimbus API wrapper.
 declare class Cumulonimbus {
-  // The token of the Cumulonimbus wrapper instance.
-  private token: string;
+  // Omitted private properties because they are not relevant to the user.
 
-  // The options of the Cumulonimbus wrapper instance.
-  private options: Cumulonimbus.ClientOptions;
+  /**
+   * The Cumulonimbus API wrapper.
+   */
+  constructor(token: string, clientOptions?: Cumulonimbus.ClientOptions);
 
-  // Creates a new Cumulonimbus API wrapper.
-  constructor(token: string, options?: Cumulonimbus.ClientOptions);
+  /**
+   * Login to an existing account with the Cumulonimbus API.
+   * @returns A promise that resolves to a Cumulonimbus instance.
+   */
+  public static login(options: {
+    username: string;
+    password: string;
+    rememberMe?: boolean;
+    tokenName?: string;
+    clientOptions?: Cumulonimbus.ClientOptions;
+  }): Promise<Cumulonimbus>;
 
-  // The generic API call method used throughout the wrapper.
-  private call<T>(
-    url: string,
-    options?: Cumulonimbus.APICallRequestInit,
-  ): Promise<Cumulonimbus.APIResponse<T>>;
+  /**
+   * Register an account with the Cumulonimbus API.
+   * @returns A promise that resolves to a Cumulonimbus instance.
+   */
+  public static register(options: {
+    username: string;
+    password: string;
+    email: string;
+    domain: string;
+    subdomain?: string;
+    clientOptions?: Cumulonimbus.ClientOptions;
+  }): Promise<Cumulonimbus>;
 
-  //Similar to the generic API call method, but it includes credentials in the request.
-  private authenticatedCall<T>(
-    url: string,
-    options?: Cumulonimbus.APICallRequestInit,
-  ): Promise<Cumulonimbus.APIResponse<T>>;
-
-  // A method to manufacture callables for the API.
-  private manufactureMethod<T extends any[], M>(
-    endpointTemplate: string | ((...args: T) => string),
-    method: string,
-    headers?: { [key: string]: string },
-    bodyTemplate?: string | null | ((...args: T) => string),
-  ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
-
-  // Similar to manufactureMethod, but is only used for GET requests and does not include the bodyTemplate parameter.
-  private manufactureMethodGet<T extends any[], M>(
-    endpointTemplate: string | ((...args: T) => string),
-    headers?: { [key: string]: string },
-  ): (...args: T) => Promise<Cumulonimbus.APIResponse<M>>;
-
-  public static login(
-    username: string,
-    password: string,
-    rememberMe?: boolean,
-    options?: Cumulonimbus.ClientOptions,
-    tokenName?: string,
-  ): Promise<Cumulonimbus>;
-
-  public static register(
-    username: string,
-    email: string,
-    password: string,
-    repeatPassword: string,
-    rememberMe?: boolean,
-    options?: Cumulonimbus.ClientOptions,
-  ): Promise<Cumulonimbus>;
-
+  /**
+   * Get the API status of the Cumulonimbus API.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
   public static getAPIStatus(
-    options?: Cumulonimbus.ClientOptions,
+    clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus>;
 
+  /**
+   * Get the API status of the Cumulonimbus thumbnail API.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
   public static getThumbnailAPIStatus(
-    options?: Cumulonimbus.ClientOptions,
+    clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus>;
 
+  //-- Instance Methods --//
+
+  /**
+   * Get the API status of the Cumulonimbus API. This method is an alias of the static method and is automatically populated with the client's options.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
+  public getAPIStatus(): Promise<Cumulonimbus.Data.APIStatus>;
+
+  /**
+   * Get the API status of the Cumulonimbus thumbnail API. This method is an alias of the static method and is automatically populated with the client's options.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
+  public getThumbnailAPIStatus(): Promise<Cumulonimbus.Data.APIStatus>;
+
+  /**
+   * Get a thumbnail of a file from the Cumulonimbus thumbnail API.
+   * @returns A promise that resolves to an ArrayBuffer of the thumbnail.
+   */
   public getThumbnail(
     id: string | Cumulonimbus.Data.File,
   ): Promise<ArrayBuffer>;
 
+  /**
+   * Get information about a user's session.
+   * @returns A promise that resolves to an API response containing the session.
+   * @link https://docs.alekeagle.me/api/session#get-users-uid-sessions-sid
+   */
   public getSession(
-    sid?: string,
-    uid?: string,
+    options?:
+      | string
+      | {
+          session?: string;
+        }
+      | {
+          session: string;
+          user: string;
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
 
-  public getSessions(
-    uid?: string,
-    limit?: number,
-    offset?: number,
-  ): Promise<
+  /**
+   * Get a list of a user's sessions.
+   * @returns A promise that resolves to an API response containing the sessions.
+   * @link https://docs.alekeagle.me/api/session#get-users-uid-sessions
+   */
+  public getSessions(options?: {
+    user?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<
     Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, 'exp'>>
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.Session, 'id' | 'name'>>
     >
   >;
 
+  /**
+   * Delete a user's session.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions-sid
+   */
   public deleteSession(
-    sid: string,
-    uid?: string,
+    options:
+      | string
+      | {
+          session: string;
+        }
+      | {
+          session: string;
+          user: string;
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Delete a user's sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions
+   */
   public deleteSessions(
-    sids: string[],
-    uid?: string,
+    sessionIDs: string[],
+    user?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Delete all of a user's sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions-all
+   */
   public deleteAllSessions(
-    uid?: string,
-    includeSelf?: boolean,
+    userOrIncludeSelf?: string | boolean,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
-  public getUsers(
-    limit?: number,
-    offset?: number,
-  ): Promise<
+  /**
+   * Get a list of all users.
+   * @returns A promise that resolves to an API response containing the users.
+   * @link https://docs.alekeagle.me/api/account#get-users
+   */
+  public getUsers(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, 'id' | 'username'>>
     >
   >;
 
+  /**
+   * Get information about a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#get-users-id
+   */
   public getUser(
-    uid?: string,
+    user?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Edit a user's username.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-username
+   */
   public editUsername(
-    username: string,
-    password?: string,
-    uid?: string,
+    options:
+      | {
+          username: string;
+          password: string;
+        }
+      | {
+          username: string;
+          user: string;
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Edit a user's email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-email
+   */
   public editEmail(
-    email: string,
-    password?: string,
-    uid?: string,
+    options:
+      | {
+          email: string;
+          password: string;
+        }
+      | {
+          email: string;
+          user: string;
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Verify a user's email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-verify
+   */
   public verifyEmail(
-    uid: string,
-    token?: string,
+    options:
+      | {
+          token: string;
+        }
+      | {
+          user: string;
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Resend a verification email.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#get-users-id-verify
+   */
   public resendVerificationEmail(
-    uid?: string,
+    user?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Unverify a user's email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id-verify
+   */
   public unverifyEmail(
     uid: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Edit a user's password.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-password
+   */
   public editPassword(
-    newPassword: string,
-    confirmNewPassword: string,
-    oldPassword?: string,
-    uid?: string,
+    options:
+      | {
+          newPassword: string;
+          confirmNewPassword: string;
+          oldPassword: string;
+        }
+      | {
+          newPassword: string;
+          confirmNewPassword: string;
+          user: string;
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Grants a user staff permissions.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-staff
+   */
   public grantStaff(
-    uid: string,
+    user: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Revokes a user's staff permissions.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id-staff
+   */
   public revokeStaff(
-    uid: string,
+    user: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Ban a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-ban
+   */
   public banUser(
-    uid: string,
+    user: string,
     reason: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Unban a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id-ban
+   */
   public unbanUser(
-    uid: string,
+    user: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   public editDomainSelection(
