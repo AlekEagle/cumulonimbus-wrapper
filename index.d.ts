@@ -28,6 +28,7 @@ declare class Cumulonimbus {
     options: {
       username: string;
       password: string;
+      confirmPassword: string;
       email: string;
       domain: string;
       subdomain?: string;

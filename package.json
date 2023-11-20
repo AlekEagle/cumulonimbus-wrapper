@@ -1,6 +1,6 @@
 {
   "name": "cumulonimbus-wrapper",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A wrapper for the Cumulonimbus API.",
   "type": "module",
   "exports": {
@@ -25,8 +25,8 @@
   },
   "homepage": "https://github.com/AlekEagle/cumulonimbus-wrapper#readme",
   "devDependencies": {
-    "@types/node": "^20.3.2",
-    "typescript": "^5.1.6"
+    "@types/node": "^20.9.2",
+    "typescript": "^5.3.2"
   },
   "engines": {
     "node": ">=18.0.0"
