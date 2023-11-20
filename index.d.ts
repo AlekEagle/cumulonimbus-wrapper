@@ -30,8 +30,7 @@ declare class Cumulonimbus {
       password: string;
       confirmPassword: string;
       email: string;
-      domain: string;
-      subdomain?: string;
+      rememberMe?: boolean;
     },
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus>;
