@@ -95,11 +95,15 @@ declare class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the sessions.
    * @link https://docs.alekeagle.me/api/session#get-users-uid-sessions
    */
-  public getSessions(options?: {
-    user?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<
+  public getSessions(
+    options?:
+      | string
+      | {
+          user?: string;
+          limit?: number;
+          offset?: number;
+        },
+  ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.Session, 'id' | 'name'>>
     >
@@ -111,7 +115,7 @@ declare class Cumulonimbus {
    * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions-sid
    */
   public deleteSession(
-    options:
+    options?:
       | string
       | {
           session: string;
@@ -174,10 +178,12 @@ declare class Cumulonimbus {
       | {
           username: string;
           password: string;
+          user?: undefined; // Disallow specifying user when password is specified
         }
       | {
           username: string;
           user: string;
+          password?: undefined; // Disallow specifying password when user is specified
         },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
@@ -191,10 +197,12 @@ declare class Cumulonimbus {
       | {
           email: string;
           password: string;
+          user?: undefined; // Disallow specifying user when password is specified
         }
       | {
           email: string;
           user: string;
+          password?: undefined; // Disallow specifying password when user is specified
         },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
@@ -207,9 +215,11 @@ declare class Cumulonimbus {
     options:
       | {
           token: string;
+          user?: undefined; // Disallow specifying user when token is specified
         }
       | {
           user: string;
+          token?: undefined; // Disallow specifying token when user is specified
         },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
@@ -242,11 +252,13 @@ declare class Cumulonimbus {
           newPassword: string;
           confirmNewPassword: string;
           oldPassword: string;
+          user?: undefined; // Disallow specifying user when password is specified
         }
       | {
           newPassword: string;
           confirmNewPassword: string;
           user: string;
+          oldPassword?: undefined; // Disallow specifying password when user is specified
         },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
@@ -287,26 +299,56 @@ declare class Cumulonimbus {
     user: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Select a domain and subdomain for a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-domain
+   */
   public editDomainSelection(
-    domain: string,
-    subdomain?: string,
-    uid?: string,
+    options: {
+      domain: string;
+      subdomain?: string;
+    },
+    user?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
+  /**
+   * Delete a user.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id
+   */
   public deleteUser(
-    uid?: string,
-    username?: string,
-    password?: string,
+    options:
+      | {
+          username: string;
+          password: string;
+          user?: undefined; // Disallow specifying user when password or username is specified
+        }
+      | {
+          user: string;
+          password?: undefined; // Disallow specifying password when user is specified
+          username?: undefined; // Disallow specifying username when user is specified
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Delete a list of specified users.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#delete-users
+   */
   public deleteUsers(
-    uids: string[],
+    userIDs: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
-  public getDomains(
-    limit?: 'all' | number,
-    offset?: number,
-  ): Promise<
+  /**
+   * Fetches a list of domains.
+   * @returns A promise that resolves to an API response containing the domains.
+   * @link https://docs.alekeagle.me/api/domain#get-domains
+   */
+  public getDomains(options?: {
+    limit?: 'all' | number;
+    offset?: number;
+  }): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<
         Extract<Cumulonimbus.Data.Domain, 'id' | 'subdomains'>
@@ -314,72 +356,158 @@ declare class Cumulonimbus {
     >
   >;
 
+  /**
+   * Fetches a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#get-domains-id
+   */
   public getDomain(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
+  /**
+   * Creates a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#post-domains
+   */
   public createDomain(
     id: string,
     subdomains?: boolean,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
+  /**
+   * Allows subdomains for a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#put-domains-id-subdomains
+   */
   public allowSubdomains(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
+  /**
+   * Disallows subdomains for a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#delete-domains-id-subdomains
+   */
   public disallowSubdomains(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Domain>>;
 
+  /**
+   * Deletes a domain.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/domain#delete-domains-id
+   */
   public deleteDomain(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Deletes a list of domains.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/domain#delete-domains
+   */
   public deleteDomains(
-    ids: string[],
+    domainIDs: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
-  public getFiles(
-    uid?: string,
-    limit?: number,
-    offset?: number,
-  ): Promise<
+  /**
+   * Gets a list of all files or files from a specific user.
+   * @returns A promise that resolves to an API response containing the files.
+   * @link https://docs.alekeagle.me/api/files#get-files
+   */
+  public getFiles(options?: {
+    user?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
     >
   >;
 
+  /**
+   * Fetches a file.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/files#get-files-id
+   */
   public getFile(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
+  /**
+   * Edit a file's display name.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/files#put-files-id-name
+   */
   public editFilename(
     id: string,
-    name?: string,
+    name: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
+  /**
+   * Delete's a file's display name.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/files#delete-files-id-name
+   */
+  public deleteFilename(
+    id: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  /**
+   * Edit a file's extension.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/files#put-files-id-extension
+   */
   public editFileExtension(
     id: string,
     extension: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
+  /**
+   * Delete a file.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/files#delete-files-id
+   */
   public deleteFile(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Delete a list of files.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/files#delete-files
+   */
   public deleteFiles(
     ids: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Delete all of a user's files.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/files#delete-files-all
+   */
   public deleteAllFiles(
-    user?: string,
-    password?: string,
+    options:
+      | {
+          user: string;
+          password?: undefined; // Disallow specifying password when user is specified
+        }
+      | {
+          password: string;
+          user?: undefined; // Disallow specifying user when password is specified
+        },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
-  public getInstructions(
-    limit?: number,
-    offset?: number,
-  ): Promise<
+  /**
+   * Get a list of all instructions.
+   * @returns A promise that resolves to an API response containing the instructions.
+   * @link https://docs.alekeagle.me/api/instruction#get-instructions
+   */
+  public getInstructions(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<
         Extract<Cumulonimbus.Data.Instruction, 'id' | 'name' | 'description'>
@@ -387,48 +515,93 @@ declare class Cumulonimbus {
     >
   >;
 
+  /**
+   * Get information about an instruction.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#get-instructions-id
+   */
   public getInstruction(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
-  public createInstruction(
-    id: string,
-    name: string,
-    description: string,
-    steps: string[],
-    content: string,
-    filename?: string,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
+  /**
+   * Create an instruction.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#post-instructions
+   */
+  public createInstruction(options: {
+    id: string;
+    name: string;
+    description: string;
+    steps: string[];
+    content: string;
+    filename?: string;
+  }): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
+  /**
+   * Edit an instruction's name.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-name
+   */
   public editInstructionName(
     id: string,
     name: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
+  /**
+   * Edit an instruction's description.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-description
+   */
   public editInstructionDescription(
     id: string,
     description: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
+  /**
+   * Edit an instruction's content.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-content
+   */
   public editInstructionFile(
     id: string,
     content: string,
     filename?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
+  /**
+   * Edit an instruction's steps.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-steps
+   */
   public editInstructionSteps(
     id: string,
     steps: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Instruction>>;
 
+  /**
+   * Delete an instruction's name.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#delete-instructions-id-name
+   */
   public deleteInstruction(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Delete a list of instructions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/instruction#delete-instructions
+   */
   public deleteInstructions(
     ids: string[],
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
+  /**
+   * Upload a file to the Cumulonimbus API.
+   * @returns A promise that resolves to an API response containing URLs to the file.
+   * @link https://docs.alekeagle.me/api/file#get-instructions
+   */
   public upload(
     file: string | Buffer | File | Blob | ArrayBuffer,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;

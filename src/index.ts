@@ -1,5 +1,5 @@
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '3.2.0';
+const version = '4.0.0';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -27,12 +27,10 @@ const USER_AGENT =
 
 class Cumulonimbus {
   private token: string;
-  private options: Cumulonimbus.ClientOptions;
   private userAgent: string = USER_AGENT;
 
-  constructor(token: string, options?: Cumulonimbus.ClientOptions) {
+  constructor(token: string, private options: Cumulonimbus.ClientOptions = {}) {
     this.token = token;
-    this.options = options || {};
   }
 
   //  Get the ratelimit headers from a response
@@ -290,13 +288,13 @@ class Cumulonimbus {
   }
 
   // Status Methods, but for the instance, eliminating the need to pass in options
-  public getAPIStatus = (function () {
-    return Cumulonimbus.getAPIStatus.bind(null, this.options);
-  })();
+  public async getAPIStatus(): Promise<Cumulonimbus.Data.APIStatus> {
+    return await Cumulonimbus.getAPIStatus(this.options);
+  }
 
-  public getThumbnailAPIStatus = (function () {
-    return Cumulonimbus.getThumbnailAPIStatus.bind(null, this.options);
-  })();
+  public async getThumbnailAPIStatus(): Promise<Cumulonimbus.Data.APIStatus> {
+    return await Cumulonimbus.getThumbnailAPIStatus(this.options);
+  }
 
   // Session Methods
   public getSession = this.manufactureMethodGet<
@@ -311,23 +309,29 @@ class Cumulonimbus {
     if (typeof options === 'string') {
       return `/users/me/sessions/${options}`;
     } else {
-      return `/users/${options.user || 'me'}/sessions/${options.session}`;
+      return `/users/${options?.user || 'me'}/sessions/${
+        options?.session || 'me'
+      }`;
     }
   });
 
   public getSessions = this.manufactureMethodGet<
-    [undefined | { user?: string; limit?: number; offset?: number }],
+    [undefined | string | { user?: string; limit?: number; offset?: number }],
     Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, 'exp'>>
-  >(
-    (options) =>
-      `/users/${options.user || 'me'}/sessions${this.toQueryString({
-        limit: options.limit,
-        offset: options.offset,
-      })}`,
-  );
+  >((options) => {
+    if (typeof options === 'string') {
+      return `/users/${options}/sessions`;
+    } else {
+      return `/users/${options?.user || 'me'}/sessions${this.toQueryString({
+        limit: options?.limit,
+        offset: options?.offset,
+      })}`;
+    }
+  });
 
   public deleteSession = this.manufactureMethod<
     [
+      | undefined
       | string
       | { session: string; user: undefined }
       | { session: string; user: string },
@@ -338,22 +342,23 @@ class Cumulonimbus {
       case 'string':
         return `/users/me/sessions/${options}`;
       case 'object':
-        return `/users/${options.user || 'me'}/sessions/${options.session}`;
+        return `/users/${options.user || 'me'}/sessions/${
+          options.session || 'me'
+        }`;
+      default:
+        return `/users/me/sessions/me`;
     }
   }, 'DELETE');
 
   public deleteSessions = this.manufactureMethod<
-    [
-      string[], // Array of session IDs
-      string, // User ID
-    ],
+    [string[], string | undefined],
     Cumulonimbus.Data.Success
   >(
-    (_, user) => `/users/${user}/sessions`,
+    (_, user) => `/users/${user || 'me'}/sessions`,
     'DELETE',
     WITH_BODY,
     (sessionIDs) => {
-      return JSON.stringify({ sids: sessionIDs });
+      return JSON.stringify({ ids: sessionIDs });
     },
   );
 
@@ -404,9 +409,10 @@ class Cumulonimbus {
     'PUT',
     WITH_BODY,
     (options) => {
+      const { username, password } = options;
       return JSON.stringify({
-        username: options.username,
-        password: options.password,
+        username,
+        password,
       });
     },
   );
@@ -430,9 +436,10 @@ class Cumulonimbus {
     'PUT',
     WITH_BODY,
     (options) => {
+      const { email, password } = options;
       return JSON.stringify({
-        email: options.email,
-        password: options.password,
+        email,
+        password,
       });
     },
   );
@@ -454,8 +461,9 @@ class Cumulonimbus {
     'PUT',
     WITH_BODY,
     (options) => {
+      const { token } = options;
       return JSON.stringify({
-        token: options.token,
+        token,
       });
     },
   );
@@ -491,10 +499,16 @@ class Cumulonimbus {
     'PUT',
     WITH_BODY,
     (options) => {
+      const {
+        newPassword,
+        confirmNewPassword,
+        oldPassword: password,
+      } = options;
+
       return JSON.stringify({
-        newPassword: options.newPassword,
-        confirmNewPassword: options.confirmNewPassword,
-        password: options.oldPassword,
+        newPassword,
+        confirmNewPassword,
+        password,
       });
     },
   );
@@ -527,50 +541,70 @@ class Cumulonimbus {
   );
 
   public editDomainSelection = this.manufactureMethod<
-    [string, string | undefined, string | undefined],
+    [{ domain: string; subdomain?: string }, string | undefined],
     Cumulonimbus.Data.User
   >(
-    (domain, subdomain, uid) => `/users/${uid || 'me'}/domain`,
+    (_, user) => `/users/${user || 'me'}/domain`,
     'PUT',
     WITH_BODY,
-    (domain, subdomain, uid) => {
-      return JSON.stringify({ domain, subdomain });
+    (options) => {
+      return JSON.stringify(options);
     },
   );
 
   public deleteUser = this.manufactureMethod<
-    [string | undefined, string | undefined, string | undefined],
+    [
+      | {
+          user: undefined;
+          username: string;
+          password: string;
+        }
+      | {
+          user: string;
+          username: undefined;
+          password: undefined;
+        },
+    ],
     Cumulonimbus.Data.Success
   >(
-    (uid, username, password) => `/users/${uid || 'me'}`,
+    (options) => `/users/${options.user || 'me'}`,
     'DELETE',
     WITH_BODY,
-    (uid, username, password) => {
-      return JSON.stringify({ username, password });
+    (options) => {
+      const { username, password } = options;
+      return JSON.stringify({
+        username,
+        password,
+      });
     },
   );
 
   public deleteUsers = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.Success
-  >('/users', 'DELETE', WITH_BODY, (ids) => {
-    return JSON.stringify({ ids });
+  >('/users', 'DELETE', WITH_BODY, (userIDs) => {
+    return JSON.stringify({ ids: userIDs });
   });
 
   // Domain Methods
 
   public getDomains = this.manufactureMethodGet<
-    ['all' | number | undefined, number | undefined],
+    [
+      {
+        limit?: number | 'all';
+        offset?: number;
+      },
+    ],
     Cumulonimbus.Data.List<
       Extract<Cumulonimbus.Data.Domain, 'id' | 'subdomains'>
     >
-  >(
-    (limit, offset) =>
-      `/domains${this.toQueryString({
-        limit: limit === 'all' ? -1 : limit,
-        offset: limit === 'all' ? undefined : offset,
-      })}`,
-  );
+  >((options) => {
+    const { limit, offset } = options || {};
+    return `/domains${this.toQueryString({
+      limit: limit === 'all' ? -1 : limit,
+      offset: limit === 'all' ? undefined : offset,
+    })}`;
+  });
 
   public getDomain = this.manufactureMethodGet<
     [string],
@@ -602,16 +636,17 @@ class Cumulonimbus {
   public deleteDomains = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.Success
-  >('/domains', 'DELETE', WITH_BODY, (ids) => {
-    return JSON.stringify({ ids });
+  >('/domains', 'DELETE', WITH_BODY, (domainIDs) => {
+    return JSON.stringify({ ids: domainIDs });
   });
 
   // File Methods
 
   public getFiles = this.manufactureMethodGet<
-    [string | undefined, number | undefined, number | undefined],
+    [{ user?: string; limit?: number; offset?: number } | undefined],
     Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
-  >((uid, limit, offset) => {
+  >((options) => {
+    const { user: uid, limit, offset } = options || {};
     return `/files${this.toQueryString({
       uid,
       limit,
@@ -624,25 +659,30 @@ class Cumulonimbus {
   );
 
   public editFilename = this.manufactureMethod<
-    [string, string | undefined],
+    [string, string],
     Cumulonimbus.Data.File
   >(
-    (id, name) => `/files/${id}/name`,
+    (id) => `/files/${id}/name`,
     'PUT',
     WITH_BODY,
-    (id, name) => {
+    (_, name) => {
       return JSON.stringify({ name });
     },
   );
+
+  public deleteFilename = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.File
+  >((id) => `/files/${id}/name`, 'DELETE');
 
   public editFileExtension = this.manufactureMethod<
     [string, string],
     Cumulonimbus.Data.File
   >(
-    (id, extension) => `/files/${id}/extension`,
+    (id) => `/files/${id}/extension`,
     'PUT',
     WITH_BODY,
-    (id, extension) => {
+    (_, extension) => {
       return JSON.stringify({ extension });
     },
   );
@@ -660,13 +700,20 @@ class Cumulonimbus {
   });
 
   public deleteAllFiles = this.manufactureMethod<
-    [string | undefined, string | undefined],
+    [
+      | { user: string; password: undefined }
+      | { user: undefined; password: string },
+    ],
     Cumulonimbus.Data.Success
   >(
-    (user, password) => `/files/all${this.toQueryString({ user })}`,
+    (options) => {
+      const { user } = options;
+      return `/files/all${this.toQueryString({ user })}`;
+    },
     'DELETE',
     WITH_BODY,
-    (user, password) => {
+    (options) => {
+      const { password } = options;
       return JSON.stringify({ password });
     },
   );
@@ -674,16 +721,11 @@ class Cumulonimbus {
   // Instruction Methods
 
   public getInstructions = this.manufactureMethodGet<
-    [number | undefined, number | undefined],
+    [{ limit?: number; offset?: number } | undefined],
     Cumulonimbus.Data.List<
       Extract<Cumulonimbus.Data.Instruction, 'id' | 'name' | 'description'>
     >
-  >((limit, offset) => {
-    return `/instructions${this.toQueryString({
-      limit,
-      offset,
-    })}`;
-  });
+  >((options) => `/instructions${this.toQueryString(options)}`);
 
   public getInstruction = this.manufactureMethodGet<
     [string],
@@ -691,32 +733,29 @@ class Cumulonimbus {
   >((id) => `/instructions/${id}`);
 
   public createInstruction = this.manufactureMethod<
-    [string, string, string, string[], string, string | undefined],
+    [
+      {
+        id: string;
+        name: string;
+        description: string;
+        steps: string[];
+        content: string;
+        filename?: string;
+      },
+    ],
     Cumulonimbus.Data.Instruction
-  >(
-    '/instructions',
-    'POST',
-    WITH_BODY,
-    (id, name, description, steps, content, filename) => {
-      return JSON.stringify({
-        id,
-        name,
-        description,
-        steps,
-        content,
-        filename,
-      });
-    },
-  );
+  >('/instructions', 'POST', WITH_BODY, (options) => {
+    return JSON.stringify(options);
+  });
 
   public editInstructionName = this.manufactureMethod<
     [string, string],
     Cumulonimbus.Data.Instruction
   >(
-    (id, name) => `/instructions/${id}/name`,
+    (id) => `/instructions/${id}/name`,
     'PUT',
     WITH_BODY,
-    (id, name) => {
+    (_, name) => {
       return JSON.stringify({ name });
     },
   );
@@ -725,10 +764,10 @@ class Cumulonimbus {
     [string, string],
     Cumulonimbus.Data.Instruction
   >(
-    (id, description) => `/instructions/${id}/description`,
+    (id) => `/instructions/${id}/description`,
     'PUT',
     WITH_BODY,
-    (id, description) => {
+    (_, description) => {
       return JSON.stringify({ description });
     },
   );
@@ -737,10 +776,10 @@ class Cumulonimbus {
     [string, string, string | undefined],
     Cumulonimbus.Data.Instruction
   >(
-    (id, content, filename) => `/instructions/${id}/file`,
+    (id) => `/instructions/${id}/file`,
     'PUT',
     WITH_BODY,
-    (id, content, filename) => {
+    (_, content, filename) => {
       return JSON.stringify({ content, filename });
     },
   );
@@ -749,10 +788,10 @@ class Cumulonimbus {
     [string, string[]],
     Cumulonimbus.Data.Instruction
   >(
-    (id, steps) => `/instructions/${id}/steps`,
+    (id) => `/instructions/${id}/steps`,
     'PUT',
     WITH_BODY,
-    (id, steps) => {
+    (_, steps) => {
       return JSON.stringify({ steps });
     },
   );
