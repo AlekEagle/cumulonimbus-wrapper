@@ -10,26 +10,30 @@ declare class Cumulonimbus {
    * Login to an existing account with the Cumulonimbus API.
    * @returns A promise that resolves to a Cumulonimbus instance.
    */
-  public static login(options: {
-    username: string;
-    password: string;
-    rememberMe?: boolean;
-    tokenName?: string;
-    clientOptions?: Cumulonimbus.ClientOptions;
-  }): Promise<Cumulonimbus>;
+  public static login(
+    options: {
+      username: string;
+      password: string;
+      rememberMe?: boolean;
+      tokenName?: string;
+    },
+    clientOptions?: Cumulonimbus.ClientOptions,
+  ): Promise<Cumulonimbus>;
 
   /**
    * Register an account with the Cumulonimbus API.
    * @returns A promise that resolves to a Cumulonimbus instance.
    */
-  public static register(options: {
-    username: string;
-    password: string;
-    email: string;
-    domain: string;
-    subdomain?: string;
-    clientOptions?: Cumulonimbus.ClientOptions;
-  }): Promise<Cumulonimbus>;
+  public static register(
+    options: {
+      username: string;
+      password: string;
+      email: string;
+      domain: string;
+      subdomain?: string;
+    },
+    clientOptions?: Cumulonimbus.ClientOptions,
+  ): Promise<Cumulonimbus>;
 
   /**
    * Get the API status of the Cumulonimbus API.
@@ -82,7 +86,8 @@ declare class Cumulonimbus {
     options?:
       | string
       | {
-          session?: string;
+          session?: string; // Make session optional when user is not specified
+          user?: undefined;
         }
       | {
           session: string;
@@ -118,10 +123,11 @@ declare class Cumulonimbus {
     options?:
       | string
       | {
-          session: string;
+          session?: string; // Make session optional when user is not specified
+          user?: undefined;
         }
       | {
-          session: string;
+          session: string; // Make session required when user is specified
           user: string;
         },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
@@ -251,14 +257,14 @@ declare class Cumulonimbus {
       | {
           newPassword: string;
           confirmNewPassword: string;
-          oldPassword: string;
+          password: string;
           user?: undefined; // Disallow specifying user when password is specified
         }
       | {
           newPassword: string;
           confirmNewPassword: string;
           user: string;
-          oldPassword?: undefined; // Disallow specifying password when user is specified
+          password?: undefined; // Disallow specifying password when user is specified
         },
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
@@ -604,6 +610,7 @@ declare class Cumulonimbus {
    */
   public upload(
     file: string | Buffer | File | Blob | ArrayBuffer,
+    type?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;
 }
 

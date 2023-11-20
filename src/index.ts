@@ -163,21 +163,23 @@ class Cumulonimbus {
       );
   }
 
-  public static async login(options: {
-    username: string;
-    password: string;
-    rememberMe?: boolean;
-    tokenName?: string;
-    clientOptions?: Cumulonimbus.ClientOptions;
-  }): Promise<Cumulonimbus> {
+  public static async login(
+    options: {
+      username: string;
+      password: string;
+      rememberMe?: boolean;
+      tokenName?: string;
+    },
+    clientOptions?: Cumulonimbus.ClientOptions,
+  ): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
       'User-Agent': USER_AGENT,
     };
     if (options.tokenName) headers['X-Token-Name'] = options.tokenName;
     const res = await fetch(
-      (options && options.clientOptions.baseURL
-        ? options.clientOptions.baseURL
+      (options && clientOptions.baseURL
+        ? clientOptions.baseURL
         : Cumulonimbus.BASE_URL) + '/login',
       {
         method: 'POST',
@@ -196,17 +198,19 @@ class Cumulonimbus {
 
     if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
 
-    return new Cumulonimbus(json.token, options.clientOptions);
+    return new Cumulonimbus(json.token, clientOptions);
   }
 
-  public static async register(options: {
-    username: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    rememberMe?: boolean;
-    clientOptions?: Cumulonimbus.ClientOptions;
-  }): Promise<Cumulonimbus> {
+  public static async register(
+    options: {
+      username: string;
+      email: string;
+      password: string;
+      confirmPassword: string;
+      rememberMe?: boolean;
+    },
+    clientOptions?: Cumulonimbus.ClientOptions,
+  ): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
       'User-Agent':
@@ -215,8 +219,8 @@ class Cumulonimbus {
           : `Cumulonimbus-Wrapper/${version}`,
     };
     const res = await fetch(
-      (options.clientOptions && options.clientOptions.baseURL
-        ? options.clientOptions.baseURL
+      (clientOptions && clientOptions.baseURL
+        ? clientOptions.baseURL
         : Cumulonimbus.BASE_URL) + '/register',
       {
         method: 'POST',
@@ -237,7 +241,7 @@ class Cumulonimbus {
 
     if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
 
-    return new Cumulonimbus(json.token, options.clientOptions);
+    return new Cumulonimbus(json.token, clientOptions);
   }
 
   // API Status Methods
@@ -333,7 +337,7 @@ class Cumulonimbus {
     [
       | undefined
       | string
-      | { session: string; user: undefined }
+      | { session?: string; user: undefined }
       | { session: string; user: string },
     ],
     Cumulonimbus.Data.Success
@@ -483,13 +487,13 @@ class Cumulonimbus {
       | {
           newPassword: string;
           confirmNewPassword: string;
-          oldPassword: string;
+          password: string;
           user: undefined;
         }
       | {
           newPassword: string;
           confirmNewPassword: string;
-          oldPassword: undefined;
+          password: undefined;
           user: string;
         },
     ],
@@ -499,11 +503,7 @@ class Cumulonimbus {
     'PUT',
     WITH_BODY,
     (options) => {
-      const {
-        newPassword,
-        confirmNewPassword,
-        oldPassword: password,
-      } = options;
+      const { newPassword, confirmNewPassword, password } = options;
 
       return JSON.stringify({
         newPassword,
