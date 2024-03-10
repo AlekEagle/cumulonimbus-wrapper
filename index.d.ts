@@ -938,7 +938,7 @@ declare class Cumulonimbus {
   /**
    * Upload a file to the Cumulonimbus API.
    * @returns A promise that resolves to an API response containing URLs to the file.
-   * @link https://docs.alekeagle.me/api/file#get-instructions
+   * @link https://docs.alekeagle.me/api/file#post-upload
    */
   public upload(
     file: string | Buffer | File | Blob | ArrayBuffer,
