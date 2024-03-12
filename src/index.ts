@@ -1,5 +1,5 @@
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '4.0.3';
+const version = '4.0.4';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -808,6 +808,28 @@ class Cumulonimbus {
     return JSON.stringify({ ids });
   });
 
+  // KillSwitch Methods
+
+  public getKillSwitches = this.manufactureMethodGet<
+    [],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+  >('/killswitches');
+
+  public enableKillSwitch = this.manufactureMethod<
+    [Cumulonimbus.KillSwitches],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+  >((id) => `/killswitches/${id}`, 'PUT');
+
+  public disableKillSwitch = this.manufactureMethod<
+    [Cumulonimbus.KillSwitches],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+  >((id) => `/killswitches/${id}`, 'DELETE');
+
+  public disableAllKillSwitches = this.manufactureMethod<
+    [],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+  >('/killswitches', 'DELETE');
+
   // Upload Method
 
   public async upload(
@@ -946,6 +968,12 @@ namespace Cumulonimbus {
       manage: string;
     }
 
+    export interface KillSwitch {
+      id: number;
+      name: string;
+      state: boolean;
+    }
+
     export interface APIStatus {
       version: string;
       hello: 'world';
@@ -1019,6 +1047,21 @@ namespace Cumulonimbus {
       this.code = response.status;
       this.message = response.statusText;
     }
+  }
+
+  export enum KillSwitches {
+    // Account related killSwitches
+    ACCOUNT_CREATE,
+    ACCOUNT_MODIFY,
+    ACCOUNT_DELETE,
+    ACCOUNT_EMAIL_VERIFY,
+    ACCOUNT_LOGIN,
+    // File related killSwitches
+    FILE_CREATE,
+    FILE_MODIFY,
+    FILE_DELETE,
+    // The Global KillSwitch
+    GLOBAL,
   }
 }
 

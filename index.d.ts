@@ -604,9 +604,47 @@ declare class Cumulonimbus {
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
 
   /**
+   * Fetches a list of kill switches.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#get-killswitches
+   */
+  public getKillSwitches(): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
+
+  /**
+   * Enables the specified kill switch.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#put-killswitches-id
+   */
+  public enableKillSwitch(
+    id: Cumulonimbus.KillSwitches,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.KillSwitch>>;
+
+  /**
+   * Disables the specified kill switch.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches-id
+   */
+  public disableKillSwitch(
+    id: Cumulonimbus.KillSwitches,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.KillSwitch>>;
+
+  /**
+   * Disables all kill switches.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
+   */
+  public disableAllKillSwitches(): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>
+  >;
+
+  /**
    * Upload a file to the Cumulonimbus API.
    * @returns A promise that resolves to an API response containing URLs to the file.
-   * @link https://docs.alekeagle.me/api/file#get-instructions
+   * @link https://docs.alekeagle.me/api/file#post-upload
    */
   public upload(
     file: string | Buffer | File | Blob | ArrayBuffer,
@@ -716,6 +754,12 @@ declare namespace Cumulonimbus {
       manage: string;
     }
 
+    export interface KillSwitch {
+      id: number;
+      name: string;
+      state: boolean;
+    }
+
     export interface APIStatus {
       version: string;
       hello: 'world';
@@ -775,6 +819,21 @@ declare namespace Cumulonimbus {
     code: number;
     message: string;
     constructor(response: Response);
+  }
+
+  export enum KillSwitches {
+    // Account related killSwitches
+    ACCOUNT_CREATE,
+    ACCOUNT_MODIFY,
+    ACCOUNT_DELETE,
+    ACCOUNT_EMAIL_VERIFY,
+    ACCOUNT_LOGIN,
+    // File related killSwitches
+    FILE_CREATE,
+    FILE_MODIFY,
+    FILE_DELETE,
+    // The Global KillSwitch
+    GLOBAL,
   }
 }
 
