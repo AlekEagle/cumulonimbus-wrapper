@@ -621,7 +621,11 @@ declare class Cumulonimbus {
    */
   public enableKillSwitch(
     id: Cumulonimbus.KillSwitches,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.KillSwitch>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
 
   /**
    * Disables the specified kill switch.
@@ -630,7 +634,11 @@ declare class Cumulonimbus {
    */
   public disableKillSwitch(
     id: Cumulonimbus.KillSwitches,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.KillSwitch>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
 
   /**
    * Disables all kill switches.
@@ -638,7 +646,9 @@ declare class Cumulonimbus {
    * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
    */
   public disableAllKillSwitches(): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
   >;
 
   /**
