@@ -549,75 +549,116 @@ class Cumulonimbus {
   public grantStaff = this.manufactureMethod<
     [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
-  >((user) => `/users/${user}/staff`, 'PUT');
+  >(
+    (uid) => `/users/${uid}/staff`,
+    'PUT',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   public revokeStaff = this.manufactureMethod<
     [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
-  >((user) => `/users/${user}/staff`, 'DELETE');
+  >(
+    (uid) => `/users/${uid}/staff`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   public banUser = this.manufactureMethod<
-    [string, string],
+    [string, string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
-    (user) => `/users/${user}/ban`,
+    (uid) => `/users/${uid}/ban`,
     'PUT',
     WITH_BODY,
-    (_, reason) => {
-      return JSON.stringify({ reason });
-    },
+    (_, reason, passwordOrSFR) =>
+      JSON.stringify({
+        reason,
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public unbanUser = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (user) => `/users/${user}/ban`,
+  public unbanUser = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(
+    (uid) => `/users/${uid}/ban`,
     'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
+
+  public editSelfDomainSelection = this.manufactureMethod<
+    [{ domain: string; subdomain?: string }],
+    Cumulonimbus.Data.User
+  >('/users/me/domain', 'PUT', WITH_BODY, JSON.stringify);
 
   public editDomainSelection = this.manufactureMethod<
-    [{ domain: string; subdomain?: string }, string | undefined],
+    [string, { domain: string; subdomain?: string }],
     Cumulonimbus.Data.User
   >(
-    (_, user) => `/users/${user || 'me'}/domain`,
+    (uid) => `/users/${uid}/domain`,
     'PUT',
     WITH_BODY,
-    (options) => {
+    (_, options) => {
       return JSON.stringify(options);
     },
   );
 
+  public deleteSelf = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_USER_SUCCESS'>
+  >('/users/me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
   public deleteUser = this.manufactureMethod<
-    [
-      | {
-          user: undefined;
-          username: string;
-          password: string;
-        }
-      | {
-          user: string;
-          username: undefined;
-          password: undefined;
-        },
-    ],
+    [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success
   >(
-    (options) => `/users/${options.user || 'me'}`,
+    (uid) => `/users/${uid}`,
     'DELETE',
     WITH_BODY,
-    (options) => {
-      const { username, password } = options;
-      return JSON.stringify({
-        username,
-        password,
-      });
-    },
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
   public deleteUsers = this.manufactureMethod<
-    [string[]],
+    [string[], string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success
-  >('/users', 'DELETE', WITH_BODY, (userIDs) => {
-    return JSON.stringify({ ids: userIDs });
-  });
+  >('/users', 'DELETE', WITH_BODY, (userIDs, passwordOrSFR) =>
+    JSON.stringify({
+      'ids': userIDs,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
 
   // Domain Methods
 
@@ -722,33 +763,39 @@ class Cumulonimbus {
 
   public deleteFile = this.manufactureMethod<
     [string],
-    Cumulonimbus.Data.Success
+    Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
   >((id) => `/files/${id}`, 'DELETE');
 
   public deleteFiles = this.manufactureMethod<
     [string[]],
-    Cumulonimbus.Data.Success
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >('/files', 'DELETE', WITH_BODY, (ids) => {
     return JSON.stringify({ ids });
   });
 
-  public deleteAllFiles = this.manufactureMethod<
-    [
-      | { user: string; password: undefined }
-      | { user: undefined; password: string },
-    ],
-    Cumulonimbus.Data.Success
+  public deleteAllSelfFiles = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+  >('/files/all?user=me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public deleteAllUserFiles = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >(
-    (options) => {
-      const { user } = options;
-      return `/files/all${this.toQueryString({ user })}`;
-    },
+    (uid) => `/files/all?user=${uid}`,
     'DELETE',
     WITH_BODY,
-    (options) => {
-      const { password } = options;
-      return JSON.stringify({ password });
-    },
+    (passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
   // Instruction Methods
