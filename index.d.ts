@@ -1108,6 +1108,7 @@ declare namespace Cumulonimbus {
 
     export interface File {
       id: string;
+      name: string;
       userID: string;
       size: number;
       createdAt: string;
