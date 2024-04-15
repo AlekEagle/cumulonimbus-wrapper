@@ -408,9 +408,19 @@ class Cumulonimbus {
   );
 
   public deleteAllUserSessions = this.manufactureMethod<
-    [string],
+    [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
-  >((uid) => `/users/${uid}/sessions/all`, 'DELETE');
+  >(
+    (uid) => `/users/${uid}/sessions/all`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   // User Methods
 

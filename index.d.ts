@@ -215,6 +215,7 @@ declare class Cumulonimbus {
    */
   public deleteAllUserSessions(
     uid: string,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
