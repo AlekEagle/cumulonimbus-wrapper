@@ -334,7 +334,6 @@ declare class Cumulonimbus {
    */
   public resendUserVerificationEmail(
     id: string,
-    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
@@ -348,6 +347,7 @@ declare class Cumulonimbus {
    */
   public unverifyUserEmail(
     id: string,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
   /**
@@ -429,7 +429,7 @@ declare class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the user.
    * @link https://docs.alekeagle.me/api/account#put-users-id-domain
    */
-  public editDomainSelection(
+  public editUserDomainSelection(
     id: string,
     options: {
       domain: string;
@@ -468,7 +468,9 @@ declare class Cumulonimbus {
   public deleteUsers(
     userIDs: string[],
     passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_USERS_SUCCESS'>>
+  >;
 
   /**
    * Fetches a list of domains.
@@ -530,7 +532,9 @@ declare class Cumulonimbus {
    */
   public deleteDomain(
     id: string,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_DOMAIN_SUCCESS'>>
+  >;
 
   /**
    * Deletes a list of domains.
@@ -539,7 +543,11 @@ declare class Cumulonimbus {
    */
   public deleteDomains(
     domainIDs: string[],
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.Success<'DELETE_DOMAINS_SUCCESS'>
+    >
+  >;
 
   /**
    * Gets a list of all files or files from a specific user.
@@ -726,7 +734,11 @@ declare class Cumulonimbus {
    */
   public deleteInstruction(
     id: string,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.Success<'DELETE_INSTRUCTION_SUCCESS'>
+    >
+  >;
 
   /**
    * Delete a list of instructions.
@@ -735,7 +747,11 @@ declare class Cumulonimbus {
    */
   public deleteInstructions(
     ids: string[],
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Success>>;
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.Success<'DELETE_INSTRUCTIONS_SUCCESS'>
+    >
+  >;
 
   /**
    * Fetches a list of kill switches.
@@ -755,6 +771,7 @@ declare class Cumulonimbus {
    */
   public enableKillSwitch(
     id: Cumulonimbus.KillSwitches,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
@@ -768,6 +785,7 @@ declare class Cumulonimbus {
    */
   public disableKillSwitch(
     id: Cumulonimbus.KillSwitches,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
@@ -779,7 +797,9 @@ declare class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the kill switches.
    * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
    */
-  public disableAllKillSwitches(): Promise<
+  public disableAllKillSwitches(
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+  ): Promise<
     Cumulonimbus.APIResponse<
       Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
     >

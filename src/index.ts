@@ -637,7 +637,7 @@ class Cumulonimbus {
     Cumulonimbus.Data.User
   >('/users/me/domain', 'PUT', WITH_BODY, JSON.stringify);
 
-  public editDomainSelection = this.manufactureMethod<
+  public editUserDomainSelection = this.manufactureMethod<
     [string, { domain: string; subdomain?: string }],
     Cumulonimbus.Data.User
   >(
@@ -815,7 +815,7 @@ class Cumulonimbus {
     (uid) => `/files/all?user=${uid}`,
     'DELETE',
     WITH_BODY,
-    (passwordOrSFR) =>
+    (_, passwordOrSFR) =>
       JSON.stringify({
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -921,19 +921,44 @@ class Cumulonimbus {
   >('/killswitches');
 
   public enableKillSwitch = this.manufactureMethod<
-    [Cumulonimbus.KillSwitches],
+    [Cumulonimbus.KillSwitches, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-  >((id) => `/killswitches/${id}`, 'PUT');
+  >(
+    (id) => `/killswitches/${id}`,
+    'PUT',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   public disableKillSwitch = this.manufactureMethod<
-    [Cumulonimbus.KillSwitches],
+    [Cumulonimbus.KillSwitches, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-  >((id) => `/killswitches/${id}`, 'DELETE');
+  >(
+    (id) => `/killswitches/${id}`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   public disableAllKillSwitches = this.manufactureMethod<
-    [],
+    [string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-  >('/killswitches', 'DELETE');
+  >('/killswitches', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
 
   // Second Factor Methods
 
@@ -1015,7 +1040,7 @@ class Cumulonimbus {
     (id) => `/users/me/2fa/${id}`,
     'DELETE',
     WITH_BODY,
-    (passwordOrSFR) =>
+    (_, passwordOrSFR) =>
       JSON.stringify({
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1030,7 +1055,7 @@ class Cumulonimbus {
     (uid, id) => `/users/${uid}/2fa/${id}`,
     'DELETE',
     WITH_BODY,
-    (passwordOrSFR) =>
+    (_, __, passwordOrSFR) =>
       JSON.stringify({
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1056,7 +1081,7 @@ class Cumulonimbus {
     (uid) => `/users/${uid}/2fa`,
     'DELETE',
     WITH_BODY,
-    (ids, passwordOrSFR) =>
+    (_, ids, passwordOrSFR) =>
       JSON.stringify({
         ids,
         'password':
@@ -1082,7 +1107,7 @@ class Cumulonimbus {
     (uid) => `/users/${uid}/2fa/all`,
     'DELETE',
     WITH_BODY,
-    (passwordOrSFR) =>
+    (_, passwordOrSFR) =>
       JSON.stringify({
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
