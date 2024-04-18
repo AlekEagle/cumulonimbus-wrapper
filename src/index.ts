@@ -1217,6 +1217,7 @@ namespace Cumulonimbus {
       subdomain: string | null;
       verifiedAt: string | null;
       bannedAt: string | null;
+      twoFactorBackupCodeUsedAt: string | null;
       createdAt: string;
       updatedAt: string;
     }
@@ -1270,7 +1271,8 @@ namespace Cumulonimbus {
     export interface SecondFactor {
       id: string;
       name: string;
-      type: ('totp' | 'backup' | 'webauthn')[];
+      type: ('totp' | 'webauthn')[];
+      usedAt: string | null;
       createdAt: string;
       updatedAt: string;
     }
@@ -1303,7 +1305,7 @@ namespace Cumulonimbus {
     export interface SecondFactorBaseRegistration {
       token: string;
       exp: number;
-      type: 'totp' | 'backup' | 'webauthn';
+      type: 'totp' | 'webauthn';
     }
 
     export interface SecondFactorTOTPRegistration
