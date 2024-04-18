@@ -1005,6 +1005,54 @@ declare class Cumulonimbus {
   >;
 
   /**
+   * Fetches a list of kill switches.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#get-killswitches
+   */
+  public getKillSwitches(): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
+
+  /**
+   * Enables the specified kill switch.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#put-killswitches-id
+   */
+  public enableKillSwitch(
+    id: Cumulonimbus.KillSwitches,
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
+
+  /**
+   * Disables the specified kill switch.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches-id
+   */
+  public disableKillSwitch(
+    id: Cumulonimbus.KillSwitches,
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
+
+  /**
+   * Disables all kill switches.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
+   */
+  public disableAllKillSwitches(): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    >
+  >;
+
+  /**
    * Upload a file to the Cumulonimbus API.
    * @returns A promise that resolves to an API response containing URLs to the file.
    * @link https://docs.alekeagle.me/api/file#post-upload
