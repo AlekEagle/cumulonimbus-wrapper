@@ -3,3 +3,4 @@ src
 dist/test
 .vscode
 *.js.map
+Makefile
