@@ -3,7 +3,8 @@
     "outDir": "./dist/",
     "noImplicitAny": true,
     "rootDir": "./src/",
-    "alwaysStrict": true
+    "alwaysStrict": true,
+    "sourceMap": true
   },
   "include": ["./src/**/*"]
 }

@@ -1,5 +1,12 @@
+import type {
+  AuthenticationResponseJSON,
+  RegistrationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/types';
+
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '4.0.5';
+const version = '5.0.0';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -49,7 +56,7 @@ class Cumulonimbus {
   // Call an endpoint from the Cumulonimbus API
   private async call<T>(
     endpoint: string,
-    options: Cumulonimbus.APICallRequestInit = {},
+    options: Cumulonimbus.RequestInit = {},
   ): Promise<Cumulonimbus.APIResponse<T>> {
     const opts = merge(options, {
       headers: {
@@ -65,21 +72,32 @@ class Cumulonimbus {
 
     let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
-    // Check if the response is a 413, and if so, construct a new BODY_TOO_LARGE error, as we can't be sure the server returns a proper error (Thanks, Cloudflare!)
-    if (res.status === 413) {
-      throw new Cumulonimbus.ResponseError(
-        {
-          code: 'BODY_TOO_LARGE_ERROR',
-          message: 'Body Too Large',
-        },
-        ratelimit,
-      );
-    }
-
     try {
       let json = await res.json();
-      if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
-      else return { result: json, ratelimit, response: res };
+      if (!res.ok) {
+        // Check if the response is a 413, and if so, construct a new BODY_TOO_LARGE error, as we can't be sure the server returns a proper error (Thanks, Cloudflare!)
+        if (res.status === 413) {
+          throw new Cumulonimbus.ResponseError(
+            {
+              code: 'BODY_TOO_LARGE_ERROR',
+              message: 'Body Too Large',
+            },
+            ratelimit,
+          );
+        } else {
+          switch (json.code) {
+            case 'MISSING_FIELDS_ERROR':
+              throw new Cumulonimbus.MissingFieldsError(json, ratelimit);
+            case 'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR':
+              throw new Cumulonimbus.SecondFactorChallengeRequiredError(
+                json,
+                ratelimit,
+              );
+            default:
+              throw new Cumulonimbus.ResponseError(json, ratelimit);
+          }
+        }
+      } else return { result: json, ratelimit, response: res };
     } catch (error) {
       // If we error for whatever reason, just throw the error we catch.
       throw error;
@@ -89,7 +107,7 @@ class Cumulonimbus {
   // Call an endpoint from the Cumulonimbus API, but with an Authorization header
   private async authenticatedCall<T>(
     url: string,
-    options: Cumulonimbus.APICallRequestInit = {},
+    options: Cumulonimbus.RequestInit = {},
   ) {
     const opts = merge(options, {
       headers: {
@@ -164,30 +182,28 @@ class Cumulonimbus {
   }
 
   public static async login(
-    options: {
-      username: string;
-      password: string;
-      rememberMe?: boolean;
-      tokenName?: string;
-    },
+    username: string,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    rememberMe: boolean = false,
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus> {
-    const headers: { [key: string]: string } = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'User-Agent': USER_AGENT,
     };
-    if (options.tokenName) headers['X-Token-Name'] = options.tokenName;
     const res = await fetch(
-      (options && clientOptions.baseURL
+      (clientOptions && clientOptions.baseURL
         ? clientOptions.baseURL
         : Cumulonimbus.BASE_URL) + '/login',
       {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          username: options.username,
-          password: options.password,
-          rememberMe: options.rememberMe || false,
+          username,
+          rememberMe,
+          'password':
+            typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+          '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
         }),
       },
     );
@@ -196,27 +212,34 @@ class Cumulonimbus {
 
     const json = await res.json();
 
-    if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
+    if (!res.ok) {
+      switch ((json as Cumulonimbus.Data.Error).code) {
+        case 'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR':
+          throw new Cumulonimbus.SecondFactorChallengeRequiredError(
+            json,
+            ratelimit,
+          );
+        case 'MISSING_FIELDS_ERROR':
+          throw new Cumulonimbus.MissingFieldsError(json, ratelimit);
+        default:
+          throw new Cumulonimbus.ResponseError(json, ratelimit);
+      }
+    }
 
     return new Cumulonimbus(json.token, clientOptions);
   }
 
   public static async register(
-    options: {
-      username: string;
-      email: string;
-      password: string;
-      confirmPassword: string;
-      rememberMe?: boolean;
-    },
+    username: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+    rememberMe: boolean = false,
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus> {
     const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
-      'User-Agent':
-        globalThis.navigator && globalThis.navigator.userAgent
-          ? globalThis.navigator.userAgent
-          : `Cumulonimbus-Wrapper/${version}`,
+      'User-Agent': USER_AGENT,
     };
     const res = await fetch(
       (clientOptions && clientOptions.baseURL
@@ -226,11 +249,11 @@ class Cumulonimbus {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          username: options.username,
-          email: options.email,
-          password: options.password,
-          confirmPassword: options.confirmPassword,
-          rememberMe: options.rememberMe || false,
+          username,
+          email,
+          password,
+          confirmPassword,
+          rememberMe,
         }),
       },
     );
@@ -239,7 +262,14 @@ class Cumulonimbus {
 
     const json = await res.json();
 
-    if (!res.ok) throw new Cumulonimbus.ResponseError(json, ratelimit);
+    if (!res.ok) {
+      switch ((json as Cumulonimbus.Data.Error).code) {
+        case 'MISSING_FIELDS_ERROR':
+          throw new Cumulonimbus.MissingFieldsError(json, ratelimit);
+        default:
+          throw new Cumulonimbus.ResponseError(json, ratelimit);
+      }
+    }
 
     return new Cumulonimbus(json.token, clientOptions);
   }
@@ -301,86 +331,96 @@ class Cumulonimbus {
   }
 
   // Session Methods
-  public getSession = this.manufactureMethodGet<
-    [
-      | undefined
-      | string
-      | { session?: string; user: undefined }
-      | { session: string; user: string },
-    ],
-    Cumulonimbus.Data.Session
-  >((options) => {
-    if (typeof options === 'string') {
-      return `/users/me/sessions/${options}`;
-    } else {
-      return `/users/${options?.user || 'me'}/sessions/${
-        options?.session || 'me'
-      }`;
-    }
-  });
-
-  public getSessions = this.manufactureMethodGet<
-    [undefined | string | { user?: string; limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Exclude<Cumulonimbus.Data.Session, 'exp'>>
-  >((options) => {
-    if (typeof options === 'string') {
-      return `/users/${options}/sessions`;
-    } else {
-      return `/users/${options?.user || 'me'}/sessions${this.toQueryString({
-        limit: options?.limit,
-        offset: options?.offset,
-      })}`;
-    }
-  });
-
-  public deleteSession = this.manufactureMethod<
-    [
-      | undefined
-      | string
-      | { session?: string; user: undefined }
-      | { session: string; user: string },
-    ],
-    Cumulonimbus.Data.Success
-  >((options) => {
-    switch (typeof options) {
-      case 'string':
-        return `/users/me/sessions/${options}`;
-      case 'object':
-        return `/users/${options.user || 'me'}/sessions/${
-          options.session || 'me'
-        }`;
-      default:
-        return `/users/me/sessions/me`;
-    }
-  }, 'DELETE');
-
-  public deleteSessions = this.manufactureMethod<
-    [string[], string | undefined],
-    Cumulonimbus.Data.Success
+  public createScopedSession = this.manufactureMethod<
+    [string, number, string | Cumulonimbus.SecondFactorResponse, boolean],
+    Cumulonimbus.Data.ScopedSessionCreate
   >(
-    (_, user) => `/users/${user || 'me'}/sessions`,
-    'DELETE',
+    '/users/me/sessions',
+    'POST',
     WITH_BODY,
-    (sessionIDs) => {
-      return JSON.stringify({ ids: sessionIDs });
-    },
+    (name, permissionFlags, passwordOrSFR, longLived) =>
+      JSON.stringify({
+        name,
+        permissionFlags,
+        longLived,
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public deleteAllSessions = this.manufactureMethod<
-    [undefined | string | boolean],
-    Cumulonimbus.Data.Success
-  >((userOrIncludeSelf) => {
-    switch (typeof userOrIncludeSelf) {
-      case 'string':
-        return `/users/${userOrIncludeSelf}/sessions/all`;
-      case 'boolean':
-        return `/users/me/sessions/all${this.toQueryString({
-          includeSelf: userOrIncludeSelf,
-        })}`;
-      default:
-        return `/users/me/sessions/all`;
-    }
-  }, 'DELETE');
+  public getSelfSession = this.manufactureMethodGet<
+    [undefined | string],
+    Cumulonimbus.Data.Session
+  >((sid) => `/users/me/sessions/${sid || 'me'}`);
+
+  public getUserSession = this.manufactureMethodGet<
+    [string, string],
+    Cumulonimbus.Data.Session
+  >((uid, sid) => `/users/${uid}/sessions/${sid}`);
+
+  public getSelfSessions = this.manufactureMethodGet<
+    [{ limit?: number; offset?: number } | undefined],
+    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.Session, 'id' | 'name'>>
+  >((options) => `/users/me/sessions${this.toQueryString(options)}`);
+
+  public getUserSessions = this.manufactureMethodGet<
+    [string, { limit?: number; offset?: number } | undefined],
+    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.Session, 'id' | 'name'>>
+  >((uid, options) => `/users/${uid}/sessions${this.toQueryString(options)}`);
+
+  public deleteSelfSession = this.manufactureMethod<
+    [string | undefined],
+    Cumulonimbus.Data.Success<'DELETE_SESSION_SUCCESS'>
+  >((sid) => `/users/me/sessions/${sid || 'me'}`, 'DELETE');
+
+  public deleteUserSession = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.Success<'DELETE_SESSION_SUCCESS'>
+  >((uid, sid) => `/users/${uid}/sessions/${sid}`, 'DELETE');
+
+  public deleteSelfSessions = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+  >('/users/me/sessions', 'DELETE', WITH_BODY, (sessionIDs) =>
+    JSON.stringify({ ids: sessionIDs }),
+  );
+
+  public deleteUserSessions = this.manufactureMethod<
+    [string, string[]],
+    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+  >(
+    (uid) => `/users/${uid}/sessions`,
+    'DELETE',
+    WITH_BODY,
+    (_, sessionIDs) => JSON.stringify({ ids: sessionIDs }),
+  );
+
+  public deleteAllSelfSessions = this.manufactureMethod<
+    [undefined | boolean],
+    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+  >(
+    (includeSelf) =>
+      `/users/me/sessions/all${this.toQueryString({
+        includeSelf,
+      })}`,
+    'DELETE',
+  );
+
+  public deleteAllUserSessions = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+  >(
+    (uid) => `/users/${uid}/sessions/all`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   // User Methods
 
@@ -389,202 +429,271 @@ class Cumulonimbus {
     Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, 'id' | 'username'>>
   >((options) => `/users${this.toQueryString(options)}`);
 
-  public getUser = this.manufactureMethodGet<
-    [string | undefined],
-    Cumulonimbus.Data.User
-  >((user) => `/users/${user || 'me'}`);
+  public getSelf = this.manufactureMethodGet<[], Cumulonimbus.Data.User>(
+    '/users/me',
+  );
 
-  public editUsername = this.manufactureMethod<
-    [
-      | {
-          username: string;
-          password: string;
-          user: undefined;
-        }
-      | {
-          username: string;
-          password: undefined;
-          user: string;
-        },
-    ],
+  public getUser = this.manufactureMethodGet<[string], Cumulonimbus.Data.User>(
+    (user) => `/users/${user}`,
+  );
+
+  public editSelfUsername = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(`/users/me/username`, 'PUT', WITH_BODY, (username, passwordOrSFR) =>
+    JSON.stringify({
+      username,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public editUserUsername = this.manufactureMethod<
+    [string, string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
-    (options) => `/users/${options.user || 'me'}/username`,
+    (uid) => `/users/${uid}/username`,
     'PUT',
     WITH_BODY,
-    (options) => {
-      const { username, password } = options;
-      return JSON.stringify({
+    (_, username, passwordOrSFR) =>
+      JSON.stringify({
         username,
-        password,
-      });
-    },
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public editEmail = this.manufactureMethod<
-    [
-      | {
-          email: string;
-          password: string;
-          user: undefined;
-        }
-      | {
-          email: string;
-          password: undefined;
-          user: string;
-        },
-    ],
+  public editSelfEmail = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(`/users/me/email`, 'PUT', WITH_BODY, (email, passwordOrSFR) =>
+    JSON.stringify({
+      email,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public editUserEmail = this.manufactureMethod<
+    [string, string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
-    (options) => `/users/${options.user || 'me'}/email`,
+    (uid) => `/users/${uid}/email`,
     'PUT',
     WITH_BODY,
-    (options) => {
-      const { email, password } = options;
-      return JSON.stringify({
+    (_, email, passwordOrSFR) =>
+      JSON.stringify({
         email,
-        password,
-      });
-    },
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public verifyEmail = this.manufactureMethod<
-    [
-      | {
-          user: undefined;
-          token: string;
-        }
-      | {
-          user: string;
-          token: undefined;
-        },
-    ],
+  public async verifyEmail(
+    token: string,
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>
+  > {
+    return await this.call<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>(
+      `/users/verify`,
+      {
+        method: 'PUT',
+        headers: WITH_BODY,
+        body: JSON.stringify({
+          token,
+        }),
+      },
+    );
+  }
+
+  public verifyUserEmail = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
-    (options) => `/users/${options.user || 'me'}/verify`,
+    (uid) => `/users/${uid}/verify`,
     'PUT',
     WITH_BODY,
-    (options) => {
-      const { token } = options;
-      return JSON.stringify({
-        token,
-      });
-    },
+    (_, tokenOrSFR) =>
+      JSON.stringify({
+        'password': typeof tokenOrSFR === 'string' ? tokenOrSFR : undefined,
+        '2fa': typeof tokenOrSFR === 'string' ? undefined : tokenOrSFR,
+      }),
   );
 
-  public resendVerificationEmail = this.manufactureMethodGet<
-    [string | undefined],
+  public resendSelfVerificationEmail = this.manufactureMethodGet<
+    [],
     Cumulonimbus.Data.Success
-  >((user) => `/users/${user || 'me'}/verify`);
+  >('/users/me/verify');
 
-  public unverifyEmail = this.manufactureMethod<
+  public resendUserVerificationEmail = this.manufactureMethodGet<
     [string],
-    Cumulonimbus.Data.User
-  >((uid) => `/users/${uid}/verify`, 'DELETE');
+    Cumulonimbus.Data.Success
+  >((uid) => `/users/${uid}/verify`);
 
-  public editPassword = this.manufactureMethod<
-    [
-      | {
-          newPassword: string;
-          confirmNewPassword: string;
-          password: string;
-          user: undefined;
-        }
-      | {
-          newPassword: string;
-          confirmNewPassword: string;
-          password: undefined;
-          user: string;
-        },
-    ],
+  public unverifyUserEmail = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
-    (options) => `/users/${options.user || 'me'}/password`,
+    (uid) => `/users/${uid}/verify`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
+
+  public editSelfPassword = this.manufactureMethod<
+    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(
+    '/users/me/password',
     'PUT',
     WITH_BODY,
-    (options) => {
-      const { newPassword, confirmNewPassword, password } = options;
-
-      return JSON.stringify({
+    (newPassword, confirmNewPassword, passwordOrSFR) =>
+      JSON.stringify({
         newPassword,
         confirmNewPassword,
-        password,
-      });
-    },
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public grantStaff = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (user) => `/users/${user}/staff`,
+  public editUserPassword = this.manufactureMethod<
+    [string, string, string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(
+    (uid) => `/users/${uid}/password`,
     'PUT',
+    WITH_BODY,
+    (_, newPassword, confirmNewPassword, passwordOrSFR) =>
+      JSON.stringify({
+        newPassword,
+        confirmNewPassword,
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public revokeStaff = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (user) => `/users/${user}/staff`,
+  public grantStaff = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(
+    (uid) => `/users/${uid}/staff`,
+    'PUT',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
+
+  public revokeStaff = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(
+    (uid) => `/users/${uid}/staff`,
     'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
   public banUser = this.manufactureMethod<
-    [string, string],
+    [string, string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
-    (user) => `/users/${user}/ban`,
+    (uid) => `/users/${uid}/ban`,
     'PUT',
     WITH_BODY,
-    (_, reason) => {
-      return JSON.stringify({ reason });
-    },
+    (_, reason, passwordOrSFR) =>
+      JSON.stringify({
+        reason,
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public unbanUser = this.manufactureMethod<[string], Cumulonimbus.Data.User>(
-    (user) => `/users/${user}/ban`,
+  public unbanUser = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.User
+  >(
+    (uid) => `/users/${uid}/ban`,
     'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
-  public editDomainSelection = this.manufactureMethod<
-    [{ domain: string; subdomain?: string }, string | undefined],
+  public editSelfDomainSelection = this.manufactureMethod<
+    [{ domain: string; subdomain?: string }],
+    Cumulonimbus.Data.User
+  >('/users/me/domain', 'PUT', WITH_BODY, JSON.stringify);
+
+  public editUserDomainSelection = this.manufactureMethod<
+    [string, { domain: string; subdomain?: string }],
     Cumulonimbus.Data.User
   >(
-    (_, user) => `/users/${user || 'me'}/domain`,
+    (uid) => `/users/${uid}/domain`,
     'PUT',
     WITH_BODY,
-    (options) => {
+    (_, options) => {
       return JSON.stringify(options);
     },
   );
 
+  public deleteSelf = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_USER_SUCCESS'>
+  >('/users/me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
   public deleteUser = this.manufactureMethod<
-    [
-      | {
-          user: undefined;
-          username: string;
-          password: string;
-        }
-      | {
-          user: string;
-          username: undefined;
-          password: undefined;
-        },
-    ],
+    [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success
   >(
-    (options) => `/users/${options.user || 'me'}`,
+    (uid) => `/users/${uid}`,
     'DELETE',
     WITH_BODY,
-    (options) => {
-      const { username, password } = options;
-      return JSON.stringify({
-        username,
-        password,
-      });
-    },
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
   public deleteUsers = this.manufactureMethod<
-    [string[]],
+    [string[], string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success
-  >('/users', 'DELETE', WITH_BODY, (userIDs) => {
-    return JSON.stringify({ ids: userIDs });
-  });
+  >('/users', 'DELETE', WITH_BODY, (userIDs, passwordOrSFR) =>
+    JSON.stringify({
+      'ids': userIDs,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
 
   // Domain Methods
 
@@ -689,33 +798,39 @@ class Cumulonimbus {
 
   public deleteFile = this.manufactureMethod<
     [string],
-    Cumulonimbus.Data.Success
+    Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
   >((id) => `/files/${id}`, 'DELETE');
 
   public deleteFiles = this.manufactureMethod<
     [string[]],
-    Cumulonimbus.Data.Success
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >('/files', 'DELETE', WITH_BODY, (ids) => {
     return JSON.stringify({ ids });
   });
 
-  public deleteAllFiles = this.manufactureMethod<
-    [
-      | { user: string; password: undefined }
-      | { user: undefined; password: string },
-    ],
-    Cumulonimbus.Data.Success
+  public deleteAllSelfFiles = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+  >('/files/all?user=me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public deleteAllUserFiles = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >(
-    (options) => {
-      const { user } = options;
-      return `/files/all${this.toQueryString({ user })}`;
-    },
+    (uid) => `/files/all?user=${uid}`,
     'DELETE',
     WITH_BODY,
-    (options) => {
-      const { password } = options;
-      return JSON.stringify({ password });
-    },
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
   );
 
   // Instruction Methods
@@ -816,19 +931,199 @@ class Cumulonimbus {
   >('/killswitches');
 
   public enableKillSwitch = this.manufactureMethod<
-    [Cumulonimbus.KillSwitches],
+    [Cumulonimbus.KillSwitches, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-  >((id) => `/killswitches/${id}`, 'PUT');
+  >(
+    (id) => `/killswitches/${id}`,
+    'PUT',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   public disableKillSwitch = this.manufactureMethod<
-    [Cumulonimbus.KillSwitches],
+    [Cumulonimbus.KillSwitches, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-  >((id) => `/killswitches/${id}`, 'DELETE');
+  >(
+    (id) => `/killswitches/${id}`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   public disableAllKillSwitches = this.manufactureMethod<
-    [],
+    [string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-  >('/killswitches', 'DELETE');
+  >('/killswitches', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  // Second Factor Methods
+
+  public beginTOTPRegistration = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.SecondFactorTOTPRegistration
+  >('/users/me/2fa/totp', 'POST', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public confirmTOTPRegistration = this.manufactureMethod<
+    [string, string, string],
+    Cumulonimbus.Data.SecondFactorRegisterSuccess
+  >('/users/me/2fa/totp/confirm', 'POST', WITH_BODY, (token, name, code) =>
+    JSON.stringify({ token, code, name }),
+  );
+
+  public beginWebAuthnRegistration = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.SecondFactorWebAuthnRegistration
+  >('/users/me/2fa/webauthn/', 'POST', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public confirmWebAuthnRegistration = this.manufactureMethod<
+    [string, string, RegistrationResponseJSON],
+    Cumulonimbus.Data.SecondFactorRegisterSuccess
+  >(
+    '/users/me/2fa/webauthn/confirm',
+    'POST',
+    WITH_BODY,
+    (token, name, response) => JSON.stringify({ token, response, name }),
+  );
+
+  public regenerateBackupCodes = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.SecondFactorBackupRegisterSuccess
+  >('/users/me/2fa/backup', 'POST', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public getSelfSecondFactors = this.manufactureMethodGet<
+    [{ limit?: number; offset?: number } | undefined],
+    Cumulonimbus.Data.List<
+      Extract<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>
+    >
+  >((options) => `/users/me/2fa${this.toQueryString(options)}`);
+
+  public getUserSecondFactors = this.manufactureMethodGet<
+    [string, { limit?: number; offset?: number } | undefined],
+    Cumulonimbus.Data.List<
+      Extract<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>
+    >
+  >((uid, options) => `/users/${uid}/2fa${this.toQueryString(options)}`);
+
+  public getSelfSecondFactor = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.SecondFactor
+  >((id) => `/users/me/2fa/${id}`);
+
+  public getUserSecondFactor = this.manufactureMethodGet<
+    [string, string],
+    Cumulonimbus.Data.SecondFactor
+  >((uid, id) => `/users/${uid}/2fa/${id}`);
+
+  public deleteSelfSecondFactor = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
+  >(
+    (id) => `/users/me/2fa/${id}`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
+
+  public deleteUserSecondFactor = this.manufactureMethod<
+    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
+  >(
+    (uid, id) => `/users/${uid}/2fa/${id}`,
+    'DELETE',
+    WITH_BODY,
+    (_, __, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
+
+  public deleteSelfSecondFactors = this.manufactureMethod<
+    [string[], string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+  >('/users/me/2fa', 'DELETE', WITH_BODY, (ids, passwordOrSFR) =>
+    JSON.stringify({
+      ids,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public deleteUserSecondFactors = this.manufactureMethod<
+    [string, string[], string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+  >(
+    (uid) => `/users/${uid}/2fa`,
+    'DELETE',
+    WITH_BODY,
+    (_, ids, passwordOrSFR) =>
+      JSON.stringify({
+        ids,
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
+
+  public deleteAllSelfSecondFactors = this.manufactureMethod<
+    [string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+  >('/users/me/2fa/all', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+    JSON.stringify({
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
+
+  public deleteAllUserSecondFactors = this.manufactureMethod<
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+  >(
+    (uid) => `/users/${uid}/2fa/all`,
+    'DELETE',
+    WITH_BODY,
+    (_, passwordOrSFR) =>
+      JSON.stringify({
+        'password':
+          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+      }),
+  );
 
   // Upload Method
 
@@ -884,7 +1179,7 @@ namespace Cumulonimbus {
     baseThumbnailURL?: string;
   }
 
-  export interface APICallRequestInit extends RequestInit {
+  export interface RequestInit extends globalThis.RequestInit {
     baseURL?: string;
     baseThumbnailURL?: string;
   }
@@ -894,6 +1189,23 @@ namespace Cumulonimbus {
     ratelimit: RatelimitData | null;
     response: Response;
   }
+
+  export type SecondFactorResponse = {
+    token: string;
+  } & (
+    | {
+        type: 'totp';
+        code: string;
+      }
+    | {
+        type: 'backup';
+        code: string;
+      }
+    | {
+        type: 'webauthn';
+        response: AuthenticationResponseJSON;
+      }
+  );
 
   export namespace Data {
     export interface User {
@@ -905,6 +1217,7 @@ namespace Cumulonimbus {
       subdomain: string | null;
       verifiedAt: string | null;
       bannedAt: string | null;
+      twoFactorBackupCodeUsedAt: string | null;
       createdAt: string;
       updatedAt: string;
     }
@@ -913,6 +1226,10 @@ namespace Cumulonimbus {
       id: number;
       exp: number;
       name: string;
+      permissionFlags: number;
+      usedAt: string;
+      createdAt: string;
+      updatedAt: string;
     }
 
     export interface List<T> {
@@ -920,10 +1237,9 @@ namespace Cumulonimbus {
       items: T[];
     }
 
-    export interface Success {
-      code: keyof SuccessCode;
-      message: SuccessCode[keyof SuccessCode];
-    }
+    export type Success<T extends keyof Successes = keyof Successes> = {
+      [K in keyof Successes[T]]: Successes[T][K];
+    };
 
     export interface Instruction {
       id: string;
@@ -943,15 +1259,22 @@ namespace Cumulonimbus {
       updatedAt: string;
     }
 
-    export interface Error {
-      code: keyof ErrorCode;
-      message: ErrorCode[keyof ErrorCode];
-      fields?: string[];
-    }
+    export type Error<T extends keyof Errors = keyof Errors> = {
+      [K in keyof Errors[T]]: Errors[T][K];
+    };
 
     export interface SuccessfulAuth {
       token: string;
       exp: number;
+    }
+
+    export interface SecondFactor {
+      id: string;
+      name: string;
+      type: ('totp' | 'webauthn')[];
+      usedAt: string | null;
+      createdAt: string;
+      updatedAt: string;
     }
 
     export interface File {
@@ -978,63 +1301,277 @@ namespace Cumulonimbus {
       version: string;
       hello: 'world';
     }
+
+    export interface SecondFactorBaseRegistration {
+      token: string;
+      exp: number;
+      type: 'totp' | 'webauthn';
+    }
+
+    export interface SecondFactorTOTPRegistration
+      extends SecondFactorBaseRegistration {
+      type: 'totp';
+      secret: string;
+      algorithm: string;
+      digits: number;
+      period: number;
+    }
+    export interface SecondFactorWebAuthnRegistration
+      extends SecondFactorBaseRegistration,
+        PublicKeyCredentialCreationOptionsJSON {
+      type: 'webauthn';
+    }
+
+    export interface SecondFactorRegisterSuccess {
+      id: string;
+      name: string;
+      type: 'totp' | 'webauthn';
+      codes?: string[];
+    }
+
+    export interface SecondFactorBackupRegisterSuccess {
+      codes: string[];
+    }
+
+    export interface ScopedSessionCreate extends Session {
+      token: string;
+    }
   }
 
-  export interface ErrorCode {
-    INSUFFICIENT_PERMISSIONS_ERROR: 'Insufficient Permissions';
-    INVALID_USER_ERROR: 'Invalid User';
-    INVALID_USERNAME_ERROR: 'Invalid Username';
-    INVALID_PASSWORD_ERROR: 'Invalid Password';
-    PASSWORDS_DO_NOT_MATCH_ERROR: 'Passwords Do Not Match';
-    INVALID_EMAIL_ERROR: 'Invalid Email';
-    EMAIL_NOT_VERIFIED_ERROR: 'Email Not Verified';
-    EMAIL_ALREADY_VERIFIED_ERROR: 'Email Already Verified';
-    INVALID_VERIFICATION_TOKEN_ERROR: 'Invalid Verification Token';
-    INVALID_SESSION_ERROR: 'Invalid Session';
-    INVALID_DOMAIN_ERROR: 'Invalid Domain';
-    SUBDOMAIN_TOO_LONG_ERROR: 'Subdomain Too Long';
-    INVALID_FILE_ERROR: 'Invalid File';
-    INVALID_INSTRUCTION_ERROR: 'Invalid Instruction';
-    INVALID_ENDPOINT_ERROR: 'Invalid Endpoint';
-    SUBDOMAIN_NOT_ALLOWED_ERROR: 'Subdomain Not Allowed';
-    DOMAIN_EXISTS_ERROR: 'Domain Exists';
-    USER_EXISTS_ERROR: 'User Exists';
-    INSTRUCTION_EXISTS_ERROR: 'Instruction Exists';
-    MISSING_FIELDS_ERROR: 'Missing Fields';
-    BANNED_ERROR: 'Banned';
-    BODY_TOO_LARGE_ERROR: 'Body Too Large';
-    RATELIMITED_ERROR: 'You Have Been Ratelimited. Please Try Again Later.';
-    INTERNAL_ERROR: 'Internal Server Error';
+  export interface Errors {
+    INVALID_ENDPOINT_ERROR: {
+      code: 'INVALID_ENDPOINT_ERROR';
+      message: 'Invalid Endpoint';
+    };
+    INSUFFICIENT_PERMISSIONS_ERROR: {
+      code: 'INSUFFICIENT_PERMISSIONS_ERROR';
+      message: 'Insufficient Permissions';
+    };
+    ENDPOINT_REQUIRES_SECOND_FACTOR_ERROR: {
+      code: 'ENDPOINT_REQUIRES_SECOND_FACTOR_ERROR';
+      message: 'Endpoint Requires Second Factor';
+    };
+    INVALID_USER_ERROR: {
+      code: 'INVALID_USER_ERROR';
+      message: 'Invalid User';
+    };
+    USER_REQUIRES_SECOND_FACTOR_ERROR: {
+      code: 'USER_REQUIRES_SECOND_FACTOR_ERROR';
+      message: 'User Requires Second Factor';
+    };
+    INVALID_USERNAME_ERROR: {
+      code: 'INVALID_USERNAME_ERROR';
+      message: 'Invalid Username';
+    };
+    INVALID_SECOND_FACTOR_ERROR: {
+      code: 'INVALID_SECOND_FACTOR_ERROR';
+      message: 'Invalid Second Factor';
+    };
+    INVALID_SECOND_FACTOR_METHOD_ERROR: {
+      code: 'INVALID_SECOND_FACTOR_METHOD_ERROR';
+      message: 'Invalid Second Factor Method';
+    };
+    INVALID_SECOND_FACTOR_RESPONSE_ERROR: {
+      code: 'INVALID_SECOND_FACTOR_RESPONSE_ERROR';
+      message: 'Invalid Second Factor Response';
+    };
+    SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR: {
+      code: 'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR';
+      message: 'Second Factor Challenge Required';
+      token: string;
+      types: ('totp' | 'backup' | 'webauthn')[];
+      challenge?: PublicKeyCredentialRequestOptionsJSON;
+    };
+    INVALID_PASSWORD_ERROR: {
+      code: 'INVALID_PASSWORD_ERROR';
+      message: 'Invalid Password';
+    };
+    PASSWORDS_DO_NOT_MATCH_ERROR: {
+      code: 'PASSWORDS_DO_NOT_MATCH_ERROR';
+      message: 'Passwords Do Not Match';
+    };
+    INVALID_EMAIL_ERROR: {
+      code: 'INVALID_EMAIL_ERROR';
+      message: 'Invalid Email';
+    };
+    EMAIL_NOT_VERIFIED_ERROR: {
+      code: 'EMAIL_NOT_VERIFIED_ERROR';
+      message: 'Email Not Verified';
+    };
+    EMAIL_ALREADY_VERIFIED_ERROR: {
+      code: 'EMAIL_ALREADY_VERIFIED_ERROR';
+      message: 'Email Already Verified';
+    };
+    INVALID_VERIFICATION_TOKEN_ERROR: {
+      code: 'INVALID_VERIFICATION_TOKEN_ERROR';
+      message: 'Invalid Verification Token';
+    };
+    INVALID_SESSION_ERROR: {
+      code: 'INVALID_SESSION_ERROR';
+      message: 'Invalid Session';
+    };
+    INVALID_DOMAIN_ERROR: {
+      code: 'INVALID_DOMAIN_ERROR';
+      message: 'Invalid Domain';
+    };
+    SUBDOMAIN_TOO_LONG_ERROR: {
+      code: 'SUBDOMAIN_TOO_LONG_ERROR';
+      message: 'Subdomain Too Long';
+    };
+    INVALID_FILE_ERROR: {
+      code: 'INVALID_FILE_ERROR';
+      message: 'Invalid File';
+    };
+    INVALID_INSTRUCTION_ERROR: {
+      code: 'INVALID_INSTRUCTION_ERROR';
+      message: 'Invalid Instruction';
+    };
+    SUBDOMAIN_NOT_ALLOWED_ERROR: {
+      code: 'SUBDOMAIN_NOT_ALLOWED_ERROR';
+      message: 'Subdomain Not Allowed';
+    };
+    DOMAIN_EXISTS_ERROR: {
+      code: 'DOMAIN_EXISTS_ERROR';
+      message: 'Domain Exists';
+    };
+    USER_EXISTS_ERROR: {
+      code: 'USER_EXISTS_ERROR';
+      message: 'User Exists';
+    };
+    INSTRUCTION_EXISTS_ERROR: {
+      code: 'INSTRUCTION_EXISTS_ERROR';
+      message: 'Instruction Exists';
+    };
+    MISSING_FIELDS_ERROR: {
+      code: 'MISSING_FIELDS_ERROR';
+      message: 'Missing Fields';
+      fields: string[];
+    };
+    BANNED_ERROR: {
+      code: 'BANNED_ERROR';
+      message: 'Banned';
+    };
+    BODY_TOO_LARGE_ERROR: {
+      code: 'BODY_TOO_LARGE_ERROR';
+      message: 'Body Too Large';
+    };
+    SERVICE_UNAVAILABLE_ERROR: {
+      code: 'SERVICE_UNAVAILABLE_ERROR';
+      message: 'Service Unavailable';
+      feature: number;
+    };
+    RATELIMITED_ERROR: {
+      code: 'RATELIMITED_ERROR';
+      message: 'You Have Been Ratelimited. Please Try Again Later.';
+    };
+    INTERNAL_ERROR: {
+      code: 'INTERNAL_ERROR';
+      message: 'Internal Server Error';
+    };
+    NOT_IMPLEMENTED_ERROR: {
+      code: 'NOT_IMPLEMENTED_ERROR';
+      message: 'Not Implemented';
+    };
   }
 
-  export interface SuccessCode {
-    DELETE_USER_SUCCESS: 'User Successfully Deleted';
-    DELETE_USERS_SUCCESS: 'Users Successfully Deleted';
-    DELETE_FILE_SUCCESS: 'File Successfully Deleted';
-    DELETE_FILES_SUCCESS: 'Files Successfully Deleted';
-    DELETE_SESSION_SUCCESS: 'Session Successfully Deleted';
-    DELETE_SESSIONS_SUCCESS: 'Sessions Successfully Deleted';
-    DELETE_DOMAIN_SUCCESS: 'Domain Successfully Deleted';
-    DELETE_DOMAINS_SUCCESS: 'Domains Successfully Deleted';
-    DELETE_INSTRUCTION_SUCCESS: 'Instruction Successfully Deleted';
-    DELETE_INSTRUCTIONS_SUCCESS: 'Instructions Successfully Deleted';
-    SEND_VERIFICATION_EMAIL_SUCCESS: 'Verification Email Successfully Sent';
+  export interface Successes {
+    DELETE_USER_SUCCESS: {
+      code: 'DELETE_USER_SUCCESS';
+      message: 'User Successfully Deleted';
+    };
+    DELETE_USERS_SUCCESS: {
+      code: 'DELETE_USERS_SUCCESS';
+      message: 'Users Successfully Deleted';
+      count: number;
+    };
+    DELETE_FILE_SUCCESS: {
+      code: 'DELETE_FILE_SUCCESS';
+      message: 'File Successfully Deleted';
+    };
+    DELETE_FILES_SUCCESS: {
+      code: 'DELETE_FILES_SUCCESS';
+      message: 'Files Successfully Deleted';
+      count: number;
+    };
+    DELETE_SESSION_SUCCESS: {
+      code: 'DELETE_SESSION_SUCCESS';
+      message: 'Session Successfully Deleted';
+    };
+    DELETE_SESSIONS_SUCCESS: {
+      code: 'DELETE_SESSIONS_SUCCESS';
+      message: 'Sessions Successfully Deleted';
+      count: number;
+    };
+    DELETE_DOMAIN_SUCCESS: {
+      code: 'DELETE_DOMAIN_SUCCESS';
+      message: 'Domain Successfully Deleted';
+    };
+    DELETE_DOMAINS_SUCCESS: {
+      code: 'DELETE_DOMAINS_SUCCESS';
+      message: 'Domains Successfully Deleted';
+      count: number;
+    };
+    DELETE_INSTRUCTION_SUCCESS: {
+      code: 'DELETE_INSTRUCTION_SUCCESS';
+      message: 'Instruction Successfully Deleted';
+    };
+    DELETE_INSTRUCTIONS_SUCCESS: {
+      code: 'DELETE_INSTRUCTIONS_SUCCESS';
+      message: 'Instructions Successfully Deleted';
+      count: number;
+    };
+    SEND_VERIFICATION_EMAIL_SUCCESS: {
+      code: 'SEND_VERIFICATION_EMAIL_SUCCESS';
+      message: 'Verification Email Successfully Sent';
+    };
+    VERIFY_EMAIL_SUCCESS: {
+      code: 'VERIFY_EMAIL_SUCCESS';
+      message: 'Successfully Verified Email';
+    };
+    DELETE_SECOND_FACTOR_SUCCESS: {
+      code: 'DELETE_SECOND_FACTOR_SUCCESS';
+      message: 'Second Factor Successfully Deleted';
+    };
+    DELETE_SECOND_FACTORS_SUCCESS: {
+      code: 'DELETE_SECOND_FACTORS_SUCCESS';
+      message: 'Second Factors Successfully Deleted';
+      count: number;
+    };
   }
 
-  export class ResponseError extends Error implements Data.Error {
-    code: keyof ErrorCode;
-    message: ErrorCode[keyof ErrorCode];
+  export class ResponseError<
+    T extends keyof Errors = keyof Errors,
+  > extends Error {
+    code: T;
+    message: Errors[T]['message'];
     ratelimit: RatelimitData | null;
-    fields?: string[];
     constructor(response: Data.Error, ratelimit: RatelimitData | null = null) {
       super(response.message as string);
       Object.setPrototypeOf(this, ResponseError.prototype);
-      this.code = response.code as keyof ErrorCode;
-      this.message = response.message as ErrorCode[keyof ErrorCode];
+      this.code = response.code as T;
+      this.message = response.message;
       this.ratelimit = ratelimit;
-      if (this.code === 'MISSING_FIELDS_ERROR') {
-        this.fields = response.fields;
-      }
+      Object.assign(this, response);
+    }
+  }
+
+  export class MissingFieldsError extends ResponseError<'MISSING_FIELDS_ERROR'> {
+    constructor(
+      response: Errors['MISSING_FIELDS_ERROR'],
+      ratelimit: RatelimitData | null = null,
+    ) {
+      super(response, ratelimit);
+      Object.setPrototypeOf(this, MissingFieldsError.prototype);
+    }
+  }
+
+  export class SecondFactorChallengeRequiredError extends ResponseError<'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'> {
+    constructor(
+      response: Errors['SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'],
+      ratelimit: RatelimitData | null = null,
+    ) {
+      super(response, ratelimit);
+      Object.setPrototypeOf(this, SecondFactorChallengeRequiredError.prototype);
     }
   }
 
@@ -1062,6 +1599,57 @@ namespace Cumulonimbus {
     FILE_DELETE,
     // The Global KillSwitch
     GLOBAL,
+  }
+
+  export enum PermissionFlags {
+    ALL = 1 << 0,
+    UPLOAD_FILE = 1 << 1,
+    ACCOUNT_READ = 1 << 2,
+    ACCOUNT_MODIFY = 1 << 3,
+    SECOND_FACTOR_READ = 1 << 4,
+    SESSION_READ = 1 << 5,
+    SESSION_MODIFY = 1 << 6,
+    FILE_READ = 1 << 7,
+    FILE_MODIFY = 1 << 8,
+    STAFF_READ_ACCOUNTS = 1 << 9,
+    STAFF_MODIFY_ACCOUNTS = 1 << 10,
+    STAFF_READ_SECOND_FACTORS = 1 << 11,
+    STAFF_MODIFY_SECOND_FACTORS = 1 << 12,
+    STAFF_READ_SESSIONS = 1 << 13,
+    STAFF_MODIFY_SESSIONS = 1 << 14,
+    STAFF_READ_FILES = 1 << 15,
+    STAFF_MODIFY_FILES = 1 << 16,
+    STAFF_MODIFY_DOMAINS = 1 << 17,
+    STAFF_MODIFY_INSTRUCTIONS = 1 << 18,
+    STAFF_MODIFY_KILLSWITCHES = 1 << 19,
+  }
+
+  export enum PermissionGroups {
+    ACCOUNT = PermissionFlags.ACCOUNT_READ | PermissionFlags.ACCOUNT_MODIFY,
+    SESSION = PermissionFlags.SESSION_READ | PermissionFlags.SESSION_MODIFY,
+    FILE = PermissionFlags.FILE_READ | PermissionFlags.FILE_MODIFY,
+    STAFF = PermissionFlags.STAFF_READ_ACCOUNTS |
+      PermissionFlags.STAFF_MODIFY_ACCOUNTS |
+      PermissionFlags.STAFF_READ_SECOND_FACTORS |
+      PermissionFlags.STAFF_MODIFY_SECOND_FACTORS |
+      PermissionFlags.STAFF_READ_SESSIONS |
+      PermissionFlags.STAFF_MODIFY_SESSIONS |
+      PermissionFlags.STAFF_READ_FILES |
+      PermissionFlags.STAFF_MODIFY_FILES |
+      PermissionFlags.STAFF_MODIFY_DOMAINS |
+      PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
+      PermissionFlags.STAFF_MODIFY_KILLSWITCHES,
+    STAFF_ACCOUNTS = PermissionFlags.STAFF_READ_ACCOUNTS |
+      PermissionFlags.STAFF_MODIFY_ACCOUNTS,
+    STAFF_SECOND_FACTORS = PermissionFlags.STAFF_READ_SECOND_FACTORS |
+      PermissionFlags.STAFF_MODIFY_SECOND_FACTORS,
+    STAFF_SESSIONS = PermissionFlags.STAFF_READ_SESSIONS |
+      PermissionFlags.STAFF_MODIFY_SESSIONS,
+    STAFF_FILES = PermissionFlags.STAFF_READ_FILES |
+      PermissionFlags.STAFF_MODIFY_FILES,
+    STAFF_ONLY = PermissionFlags.STAFF_MODIFY_DOMAINS |
+      PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
+      PermissionFlags.STAFF_MODIFY_KILLSWITCHES,
   }
 }
 
