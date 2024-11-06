@@ -6,7 +6,7 @@ import type {
 } from '@simplewebauthn/types';
 
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '5.0.0';
+const version = '5.0.1';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
