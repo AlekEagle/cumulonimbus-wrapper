@@ -6,7 +6,7 @@ import type {
 } from '@simplewebauthn/types';
 
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '5.0.1';
+const version = '5.1.0';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -30,7 +30,7 @@ const WITH_BODY = {
 const USER_AGENT =
   globalThis.navigator && globalThis.navigator.userAgent
     ? globalThis.navigator.userAgent
-    : `Cumulonimbus-Wrapper/${version}`;
+    : `Cumulonimbus-Wrapper/${333}`;
 
 class Cumulonimbus {
   private token: string;
@@ -751,27 +751,41 @@ class Cumulonimbus {
 
   // File Methods
 
-  public getFiles = this.manufactureMethodGet<
-    [{ user?: string; limit?: number; offset?: number } | undefined],
+  public getAllFiles = this.manufactureMethodGet<
+    [{ limit?: number; offset?: number } | undefined],
     Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
-  >((options) => {
-    const { user: uid, limit, offset } = options || {};
-    return `/files${this.toQueryString({
-      uid,
-      limit,
-      offset,
-    })}`;
-  });
+  >((options) => `/files${this.toQueryString(options)}`);
 
-  public getFile = this.manufactureMethodGet<[string], Cumulonimbus.Data.File>(
-    (id) => `/files/${id}`,
-  );
+  public getSelfFiles = this.manufactureMethodGet<
+    [{ limit?: number; offset?: number } | undefined],
+    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+  >((options) => `/users/me/files${this.toQueryString(options)}`);
 
-  public editFilename = this.manufactureMethod<
+  public getUserFiles = this.manufactureMethodGet<
+    [string, { limit?: number; offset?: number } | undefined],
+    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+  >((uid, options) => `/users/${uid}/files${this.toQueryString(options)}`);
+
+  public getArbitraryFile = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.File
+  >((id) => `/files/${id}`);
+
+  public getSelfFile = this.manufactureMethodGet<
+    [string],
+    Cumulonimbus.Data.File
+  >((id) => `/users/me/files/${id}`);
+
+  public getUserFile = this.manufactureMethodGet<
+    [string, string],
+    Cumulonimbus.Data.File
+  >((uid, id) => `/users/${uid}/files/${id}`);
+
+  public editSelfFilename = this.manufactureMethod<
     [string, string],
     Cumulonimbus.Data.File
   >(
-    (id) => `/files/${id}/name`,
+    (id) => `/users/me/files/${id}/name`,
     'PUT',
     WITH_BODY,
     (_, name) => {
@@ -779,16 +793,33 @@ class Cumulonimbus {
     },
   );
 
-  public deleteFilename = this.manufactureMethod<
+  public editUserFilename = this.manufactureMethod<
+    [string, string, string],
+    Cumulonimbus.Data.File
+  >(
+    (uid, id) => `/users/${uid}/files/${id}/name`,
+    'PUT',
+    WITH_BODY,
+    (_, name) => {
+      return JSON.stringify({ name });
+    },
+  );
+
+  public deleteSelfFilename = this.manufactureMethod<
     [string],
     Cumulonimbus.Data.File
-  >((id) => `/files/${id}/name`, 'DELETE');
+  >((id) => `/users/me/files/${id}/name`, 'DELETE');
 
-  public editFileExtension = this.manufactureMethod<
+  public deleteUserFilename = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.File
+  >((uid, id) => `/users/${uid}/files/${id}/name`, 'DELETE');
+
+  public editSelfFileExtension = this.manufactureMethod<
     [string, string],
     Cumulonimbus.Data.File
   >(
-    (id) => `/files/${id}/extension`,
+    (id) => `/users/me/files/${id}/extension`,
     'PUT',
     WITH_BODY,
     (_, extension) => {
@@ -796,22 +827,49 @@ class Cumulonimbus {
     },
   );
 
-  public deleteFile = this.manufactureMethod<
+  public editUserFileExtension = this.manufactureMethod<
+    [string, string, string],
+    Cumulonimbus.Data.File
+  >(
+    (uid, id) => `/users/${uid}/files/${id}/extension`,
+    'PUT',
+    WITH_BODY,
+    (_, extension) => {
+      return JSON.stringify({ extension });
+    },
+  );
+
+  public deleteSelfFile = this.manufactureMethod<
     [string],
     Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
-  >((id) => `/files/${id}`, 'DELETE');
+  >((id) => `/users/me/files/${id}`, 'DELETE');
 
-  public deleteFiles = this.manufactureMethod<
+  public deleteUserFile = this.manufactureMethod<
+    [string, string],
+    Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
+  >((uid, id) => `/users/${uid}/files/${id}`, 'DELETE');
+
+  public deleteSelfFiles = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
-  >('/files', 'DELETE', WITH_BODY, (ids) => {
+  >('/users/me/files', 'DELETE', WITH_BODY, (ids) => {
     return JSON.stringify({ ids });
   });
+
+  public deleteUserFiles = this.manufactureMethod<
+    [string, string[]],
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+  >(
+    (uid) => `/users/${uid}/files`,
+    'DELETE',
+    WITH_BODY,
+    (_, ids) => JSON.stringify({ ids }),
+  );
 
   public deleteAllSelfFiles = this.manufactureMethod<
     [string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
-  >('/files/all?user=me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
+  >('/users/me/files/all', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
       '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
@@ -822,7 +880,7 @@ class Cumulonimbus {
     [string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >(
-    (uid) => `/files/all?user=${uid}`,
+    (uid) => `/users/${uid}/files/all`,
     'DELETE',
     WITH_BODY,
     (_, passwordOrSFR) =>
@@ -1125,6 +1183,18 @@ class Cumulonimbus {
       }),
   );
 
+  // Utility Methods
+
+  public getLogLevel = this.manufactureMethodGet<
+    [],
+    Cumulonimbus.Data.List<Cumulonimbus.Data.LogLevel>
+  >('/loglevel');
+
+  public setLogLevel = this.manufactureMethod<
+    [string],
+    Cumulonimbus.Data.LogLevel
+  >('/loglevel', 'PATCH', WITH_BODY, (name) => JSON.stringify({ name }));
+
   // Upload Method
 
   public async upload(
@@ -1166,7 +1236,7 @@ class Cumulonimbus {
 namespace Cumulonimbus {
   export const BASE_URL = 'https://alekeagle.me/api';
   export const BASE_THUMBNAIL_URL = 'https://previews.alekeagle.me';
-  export const VERSION = version;
+  export const VERSION = 333;
 
   export interface RatelimitData {
     limit: number;
@@ -1336,6 +1406,10 @@ namespace Cumulonimbus {
     export interface ScopedSessionCreate extends Session {
       token: string;
     }
+
+    export interface LogLevel {
+      name: string;
+    }
   }
 
   export interface Errors {
@@ -1425,6 +1499,10 @@ namespace Cumulonimbus {
     INVALID_INSTRUCTION_ERROR: {
       code: 'INVALID_INSTRUCTION_ERROR';
       message: 'Invalid Instruction';
+    };
+    INVALID_LOGLEVEL_ERROR: {
+      code: 'INVALID_LOGLEVEL_ERROR';
+      message: 'Invalid LogLevel';
     };
     SUBDOMAIN_NOT_ALLOWED_ERROR: {
       code: 'SUBDOMAIN_NOT_ALLOWED_ERROR';
@@ -1622,6 +1700,7 @@ namespace Cumulonimbus {
     STAFF_MODIFY_DOMAINS = 1 << 17,
     STAFF_MODIFY_INSTRUCTIONS = 1 << 18,
     STAFF_MODIFY_KILLSWITCHES = 1 << 19,
+    STAFF_MODIFY_LOGLEVEL = 1 << 20,
   }
 
   export enum PermissionGroups {
@@ -1638,7 +1717,8 @@ namespace Cumulonimbus {
       PermissionFlags.STAFF_MODIFY_FILES |
       PermissionFlags.STAFF_MODIFY_DOMAINS |
       PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
-      PermissionFlags.STAFF_MODIFY_KILLSWITCHES,
+      PermissionFlags.STAFF_MODIFY_KILLSWITCHES |
+      PermissionFlags.STAFF_MODIFY_LOGLEVEL,
     STAFF_ACCOUNTS = PermissionFlags.STAFF_READ_ACCOUNTS |
       PermissionFlags.STAFF_MODIFY_ACCOUNTS,
     STAFF_SECOND_FACTORS = PermissionFlags.STAFF_READ_SECOND_FACTORS |
@@ -1649,7 +1729,16 @@ namespace Cumulonimbus {
       PermissionFlags.STAFF_MODIFY_FILES,
     STAFF_ONLY = PermissionFlags.STAFF_MODIFY_DOMAINS |
       PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
-      PermissionFlags.STAFF_MODIFY_KILLSWITCHES,
+      PermissionFlags.STAFF_MODIFY_KILLSWITCHES |
+      PermissionFlags.STAFF_MODIFY_LOGLEVEL,
+  }
+
+  export enum LogLevel {
+    NONE = 'NONE',
+    ERROR = 'ERROR',
+    WARN = 'WARN',
+    INFO = 'INFO',
+    DEBUG = 'DEBUG',
   }
 }
 

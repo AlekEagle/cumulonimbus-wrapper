@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["simplewebauthn", "totp", "uids", "webauthn"]
+  "cSpell.words": ["simplewebauthn", "totp", "uids", "webauthn"],
+  "makefile.configureOnOpen": false
 }
