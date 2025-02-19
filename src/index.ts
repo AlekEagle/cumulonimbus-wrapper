@@ -30,8 +30,7 @@ const WITH_BODY = {
 const USER_AGENT =
   globalThis.navigator && globalThis.navigator.userAgent
     ? globalThis.navigator.userAgent
-    : `Cumulonimbus-Wrapper/${333}`;
-
+    : `Cumulonimbus-Wrapper/${version}`;
 class Cumulonimbus {
   private token: string;
   private userAgent: string = USER_AGENT;
@@ -1236,7 +1235,7 @@ class Cumulonimbus {
 namespace Cumulonimbus {
   export const BASE_URL = 'https://alekeagle.me/api';
   export const BASE_THUMBNAIL_URL = 'https://previews.alekeagle.me';
-  export const VERSION = 333;
+  export const VERSION = version;
 
   export interface RatelimitData {
     limit: number;
