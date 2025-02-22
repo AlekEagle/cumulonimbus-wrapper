@@ -731,6 +731,17 @@ declare class Cumulonimbus {
   >;
 
   /**
+   * Delete an arbitrary list of files using only their IDs.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-files
+   */
+  public deleteArbitraryFiles(
+    ids: string[],
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>>
+  >;
+
+  /**
    * Delete all of your own files.
    * @returns A promise that resolves to an API response containing the success message.
    * @link https://docs.alekeagle.me/api/file#delete-users-me-files-all
@@ -1110,54 +1121,6 @@ declare class Cumulonimbus {
   >;
 
   /**
-   * Fetches a list of kill switches.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#get-killswitches
-   */
-  public getKillSwitches(): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
-
-  /**
-   * Enables the specified kill switch.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#put-killswitches-id
-   */
-  public enableKillSwitch(
-    id: Cumulonimbus.KillSwitches,
-  ): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
-
-  /**
-   * Disables the specified kill switch.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches-id
-   */
-  public disableKillSwitch(
-    id: Cumulonimbus.KillSwitches,
-  ): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
-
-  /**
-   * Disables all kill switches.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
-   */
-  public disableAllKillSwitches(): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
-
-  /**
    * Get the current LogLevel.
    * @returns A promise that resolves to an API response containing the log level.
    * @link https://docs.alekeagle.me/api/utility#get-loglevel
@@ -1173,7 +1136,8 @@ declare class Cumulonimbus {
    * @link https://docs.alekeagle.me/api/utility#patch-loglevel
    */
   public setLogLevel(
-    name: Cumulonimbus.Data.LogLevel,
+    name: Cumulonimbus.LogLevel,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.LogLevel>>;
 
   /**

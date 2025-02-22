@@ -495,7 +495,7 @@ class Cumulonimbus {
   ): Promise<
     Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>
   > {
-    return await this.call<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>(
+    return this.call<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>(
       `/users/verify`,
       {
         method: 'PUT',
@@ -653,9 +653,7 @@ class Cumulonimbus {
     (uid) => `/users/${uid}/domain`,
     'PUT',
     WITH_BODY,
-    (_, options) => {
-      return JSON.stringify(options);
-    },
+    (_, options) => JSON.stringify(options),
   );
 
   public deleteSelf = this.manufactureMethod<
@@ -722,9 +720,9 @@ class Cumulonimbus {
   public createDomain = this.manufactureMethod<
     [string, boolean | undefined],
     Cumulonimbus.Data.Domain
-  >('/domains', 'POST', WITH_BODY, (id, subdomains) => {
-    return JSON.stringify({ id, subdomains });
-  });
+  >('/domains', 'POST', WITH_BODY, (id, subdomains) =>
+    JSON.stringify({ id, subdomains }),
+  );
 
   public allowSubdomains = this.manufactureMethod<
     [string],
@@ -744,9 +742,7 @@ class Cumulonimbus {
   public deleteDomains = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.Success
-  >('/domains', 'DELETE', WITH_BODY, (domainIDs) => {
-    return JSON.stringify({ ids: domainIDs });
-  });
+  >('/domains', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   // File Methods
 
@@ -787,9 +783,7 @@ class Cumulonimbus {
     (id) => `/users/me/files/${id}/name`,
     'PUT',
     WITH_BODY,
-    (_, name) => {
-      return JSON.stringify({ name });
-    },
+    (_, name) => JSON.stringify({ name }),
   );
 
   public editUserFilename = this.manufactureMethod<
@@ -799,9 +793,7 @@ class Cumulonimbus {
     (uid, id) => `/users/${uid}/files/${id}/name`,
     'PUT',
     WITH_BODY,
-    (_, name) => {
-      return JSON.stringify({ name });
-    },
+    (_, __, name) => JSON.stringify({ name }),
   );
 
   public deleteSelfFilename = this.manufactureMethod<
@@ -821,9 +813,7 @@ class Cumulonimbus {
     (id) => `/users/me/files/${id}/extension`,
     'PUT',
     WITH_BODY,
-    (_, extension) => {
-      return JSON.stringify({ extension });
-    },
+    (_, extension) => JSON.stringify({ extension }),
   );
 
   public editUserFileExtension = this.manufactureMethod<
@@ -833,9 +823,7 @@ class Cumulonimbus {
     (uid, id) => `/users/${uid}/files/${id}/extension`,
     'PUT',
     WITH_BODY,
-    (_, extension) => {
-      return JSON.stringify({ extension });
-    },
+    (_, __, extension) => JSON.stringify({ extension }),
   );
 
   public deleteSelfFile = this.manufactureMethod<
@@ -851,9 +839,7 @@ class Cumulonimbus {
   public deleteSelfFiles = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
-  >('/users/me/files', 'DELETE', WITH_BODY, (ids) => {
-    return JSON.stringify({ ids });
-  });
+  >('/users/me/files', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   public deleteUserFiles = this.manufactureMethod<
     [string, string[]],
@@ -864,6 +850,11 @@ class Cumulonimbus {
     WITH_BODY,
     (_, ids) => JSON.stringify({ ids }),
   );
+
+  public deleteArbitraryFiles = this.manufactureMethod<
+    [string[]],
+    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+  >('/files', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   public deleteAllSelfFiles = this.manufactureMethod<
     [string | Cumulonimbus.SecondFactorResponse],
@@ -916,9 +907,7 @@ class Cumulonimbus {
       },
     ],
     Cumulonimbus.Data.Instruction
-  >('/instructions', 'POST', WITH_BODY, (options) => {
-    return JSON.stringify(options);
-  });
+  >('/instructions', 'POST', WITH_BODY, (options) => JSON.stringify(options));
 
   public editInstructionName = this.manufactureMethod<
     [string, string],
@@ -927,9 +916,7 @@ class Cumulonimbus {
     (id) => `/instructions/${id}/name`,
     'PUT',
     WITH_BODY,
-    (_, name) => {
-      return JSON.stringify({ name });
-    },
+    (_, name) => JSON.stringify({ name }),
   );
 
   public editInstructionDescription = this.manufactureMethod<
@@ -939,9 +926,7 @@ class Cumulonimbus {
     (id) => `/instructions/${id}/description`,
     'PUT',
     WITH_BODY,
-    (_, description) => {
-      return JSON.stringify({ description });
-    },
+    (_, description) => JSON.stringify({ description }),
   );
 
   public editInstructionFile = this.manufactureMethod<
@@ -951,9 +936,7 @@ class Cumulonimbus {
     (id) => `/instructions/${id}/file`,
     'PUT',
     WITH_BODY,
-    (_, content, filename) => {
-      return JSON.stringify({ content, filename });
-    },
+    (_, content, filename) => JSON.stringify({ content, filename }),
   );
 
   public editInstructionSteps = this.manufactureMethod<
@@ -963,9 +946,7 @@ class Cumulonimbus {
     (id) => `/instructions/${id}/steps`,
     'PUT',
     WITH_BODY,
-    (_, steps) => {
-      return JSON.stringify({ steps });
-    },
+    (_, steps) => JSON.stringify({ steps }),
   );
 
   public deleteInstruction = this.manufactureMethod<
@@ -976,9 +957,7 @@ class Cumulonimbus {
   public deleteInstructions = this.manufactureMethod<
     [string[]],
     Cumulonimbus.Data.Success
-  >('/instructions', 'DELETE', WITH_BODY, (ids) => {
-    return JSON.stringify({ ids });
-  });
+  >('/instructions', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   // KillSwitch Methods
 
@@ -1190,9 +1169,15 @@ class Cumulonimbus {
   >('/loglevel');
 
   public setLogLevel = this.manufactureMethod<
-    [string],
-    Cumulonimbus.Data.LogLevel
-  >('/loglevel', 'PATCH', WITH_BODY, (name) => JSON.stringify({ name }));
+    [string, string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.LogLevel
+  >('/loglevel', 'PATCH', WITH_BODY, (name, passwordOrSFR) =>
+    JSON.stringify({
+      name,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
+  );
 
   // Upload Method
 
