@@ -1191,7 +1191,9 @@ class Cumulonimbus {
     } else if (globalThis.Buffer && file instanceof globalThis.Buffer) {
       formData.append(
         'file',
-        new Blob([file], { type: type || 'application/octet-stream' }),
+        new Blob([new Uint8Array(file).buffer], {
+          type: type || 'application/octet-stream',
+        }),
       );
     } else if (file instanceof File) {
       formData.append('file', file);
