@@ -551,12 +551,11 @@ declare class Cumulonimbus {
   >;
 
   /**
-   * Gets a list of all files or files from a specific user.
+   * Gets a list of all files.
    * @returns A promise that resolves to an API response containing the files.
-   * @link https://docs.alekeagle.me/api/files#get-files
+   * @link https://docs.alekeagle.me/api/file#get-files
    */
-  public getFiles(options?: {
-    user?: string;
+  public getAllFiles(options?: {
     limit?: number;
     offset?: number;
   }): Promise<
@@ -566,60 +565,177 @@ declare class Cumulonimbus {
   >;
 
   /**
-   * Fetches a file.
-   * @returns A promise that resolves to an API response containing the file.
-   * @link https://docs.alekeagle.me/api/files#get-files-id
+   * Gets a list of all files belonging to you.
+   * @returns A promise that resolves to an API response containing the files.
+   * @link https://docs.alekeagle.me/api/file#get-users-me-files
    */
-  public getFile(
+  public getSelfFiles(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+    >
+  >;
+
+  /**
+   * Gets a list of all files belonging to a user.
+   * @returns  A promise that resolves to an API response containing the files.
+   * @link https://docs.alekeagle.me/api/file#get-users-uid-files
+   */
+  public getUserFiles(
+    uid: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<
+    Cumulonimbus.APIResponse<
+      Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+    >
+  >;
+
+  /**
+   * Fetches an arbitrary file using only its ID.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#get-files-id
+   */
+  public getArbitraryFile(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   /**
-   * Edit a file's display name.
+   * Fetches a file belonging to you using its ID.
    * @returns A promise that resolves to an API response containing the file.
-   * @link https://docs.alekeagle.me/api/files#put-files-id-name
+   * @link https://docs.alekeagle.me/api/file#get-users-me-files-id
    */
-  public editFilename(
+  public getSelfFile(
+    id: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  /**
+   * Fetches a file belonging to a user using its ID.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#get-users-uid-files-id
+   */
+  public getUserFile(
+    uid: string,
+    id: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  /**
+   * Edit the display name of a file belonging to you.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-me-files-id-name
+   */
+  public editSelfFilename(
     id: string,
     name: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   /**
-   * Delete's a file's display name.
+   * Edit the display name of a file belonging to a user.
    * @returns A promise that resolves to an API response containing the file.
-   * @link https://docs.alekeagle.me/api/files#delete-files-id-name
+   * @link https://docs.alekeagle.me/api/file#put-users-uid-files-id-name
    */
-  public deleteFilename(
+  public editUserFilename(
+    uid: string,
+    id: string,
+    name: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  /**
+   * Delete the display name of a file belonging to you.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files-id-name
+   */
+  public deleteSelfFilename(
     id: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   /**
-   * Edit a file's extension.
+   * Delete the display name of a file belonging to a user.
    * @returns A promise that resolves to an API response containing the file.
-   * @link https://docs.alekeagle.me/api/files#put-files-id-extension
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files-id-name
    */
-  public editFileExtension(
+  public deleteUserFilename(
+    uid: string,
+    id: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  /**
+   * Edit the extension of a file belonging to you.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-me-files-id-extension
+   */
+  public editSelfFileExtension(
     id: string,
     extension: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
 
   /**
-   * Delete a file.
-   * @returns A promise that resolves to an API response containing the success message.
-   * @link https://docs.alekeagle.me/api/files#delete-files-id
+   * Edit the extension of a file belonging to a user.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-uid-files-id-extension
    */
-  public deleteFile(
+  public editUserFileExtension(
+    uid: string,
+    id: string,
+    extension: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.File>>;
+
+  /**
+   * Delete a file belonging to you.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files-id
+   */
+  public deleteSelfFile(
     id: string,
   ): Promise<
     Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>>
   >;
 
   /**
-   * Delete a list of files.
+   * Delete a file belonging to a user.
    * @returns A promise that resolves to an API response containing the success message.
-   * @link https://docs.alekeagle.me/api/files#delete-files
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files-id
    */
-  public deleteFiles(
+  public deleteUserFile(
+    uid: string,
+    id: string,
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>>
+  >;
+
+  /**
+   * Delete a list of files belonging to you.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files
+   */
+  public deleteSelfFiles(
+    ids: string[],
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>>
+  >;
+
+  /**
+   * Delete a list of files belonging to a user.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files
+   */
+  public deleteUserFiles(
+    uid: string,
+    ids: string[],
+  ): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>>
+  >;
+
+  /**
+   * Delete an arbitrary list of files using only their IDs.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-files
+   */
+  public deleteArbitraryFiles(
     ids: string[],
   ): Promise<
     Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>>
@@ -628,7 +744,7 @@ declare class Cumulonimbus {
   /**
    * Delete all of your own files.
    * @returns A promise that resolves to an API response containing the success message.
-   * @link https://docs.alekeagle.me/api/files#delete-files
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files-all
    */
   public deleteAllSelfFiles(
     passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
@@ -639,7 +755,7 @@ declare class Cumulonimbus {
   /**
    * Delete all of a user's files.
    * @returns A promise that resolves to an API response containing the success message.
-   * @link https://docs.alekeagle.me/api/files#delete-files
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files-all
    */
   public deleteAllUserFiles(
     user: string,
@@ -1005,52 +1121,24 @@ declare class Cumulonimbus {
   >;
 
   /**
-   * Fetches a list of kill switches.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#get-killswitches
+   * Get the current LogLevel.
+   * @returns A promise that resolves to an API response containing the log level.
+   * @link https://docs.alekeagle.me/api/utility#get-loglevel
+   *
    */
-  public getKillSwitches(): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
+  public getLogLevel(): Promise<
+    Cumulonimbus.APIResponse<Cumulonimbus.Data.LogLevel>
   >;
 
   /**
-   * Enables the specified kill switch.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#put-killswitches-id
+   * Set the LogLevel.
+   * @returns A promise that resolves to an API response containing the log level.
+   * @link https://docs.alekeagle.me/api/utility#patch-loglevel
    */
-  public enableKillSwitch(
-    id: Cumulonimbus.KillSwitches,
-  ): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
-
-  /**
-   * Disables the specified kill switch.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches-id
-   */
-  public disableKillSwitch(
-    id: Cumulonimbus.KillSwitches,
-  ): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
-
-  /**
-   * Disables all kill switches.
-   * @returns A promise that resolves to an API response containing the kill switches.
-   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
-   */
-  public disableAllKillSwitches(): Promise<
-    Cumulonimbus.APIResponse<
-      Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
-    >
-  >;
+  public setLogLevel(
+    name: Cumulonimbus.LogLevel,
+    passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.LogLevel>>;
 
   /**
    * Upload a file to the Cumulonimbus API.
@@ -1237,6 +1325,10 @@ declare namespace Cumulonimbus {
     export interface ScopedSessionCreate extends Session {
       token: string;
     }
+
+    export interface LogLevel {
+      name: string;
+    }
   }
 
   export interface Errors {
@@ -1326,6 +1418,10 @@ declare namespace Cumulonimbus {
     INVALID_INSTRUCTION_ERROR: {
       code: 'INVALID_INSTRUCTION_ERROR';
       message: 'Invalid Instruction';
+    };
+    INVALID_LOGLEVEL_ERROR: {
+      code: 'INVALID_LOGLEVEL_ERROR';
+      message: 'Invalid LogLevel';
     };
     SUBDOMAIN_NOT_ALLOWED_ERROR: {
       code: 'SUBDOMAIN_NOT_ALLOWED_ERROR';
@@ -1511,6 +1607,7 @@ declare namespace Cumulonimbus {
     STAFF_MODIFY_DOMAINS = 1 << 17,
     STAFF_MODIFY_INSTRUCTIONS = 1 << 18,
     STAFF_MODIFY_KILLSWITCHES = 1 << 19,
+    STAFF_MODIFY_LOGLEVEL = 1 << 20,
   }
 
   export enum PermissionGroups {
@@ -1527,7 +1624,8 @@ declare namespace Cumulonimbus {
       PermissionFlags.STAFF_MODIFY_FILES |
       PermissionFlags.STAFF_MODIFY_DOMAINS |
       PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
-      PermissionFlags.STAFF_MODIFY_KILLSWITCHES,
+      PermissionFlags.STAFF_MODIFY_KILLSWITCHES |
+      PermissionFlags.STAFF_MODIFY_LOGLEVEL,
     STAFF_ACCOUNTS = PermissionFlags.STAFF_READ_ACCOUNTS |
       PermissionFlags.STAFF_MODIFY_ACCOUNTS,
     STAFF_SECOND_FACTORS = PermissionFlags.STAFF_READ_SECOND_FACTORS |
@@ -1538,7 +1636,16 @@ declare namespace Cumulonimbus {
       PermissionFlags.STAFF_MODIFY_FILES,
     STAFF_ONLY = PermissionFlags.STAFF_MODIFY_DOMAINS |
       PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
-      PermissionFlags.STAFF_MODIFY_KILLSWITCHES,
+      PermissionFlags.STAFF_MODIFY_KILLSWITCHES |
+      PermissionFlags.STAFF_MODIFY_LOGLEVEL,
+  }
+
+  export enum LogLevel {
+    NONE = 'NONE',
+    ERROR = 'ERROR',
+    WARN = 'WARN',
+    INFO = 'INFO',
+    DEBUG = 'DEBUG',
   }
 }
 
