@@ -101,6 +101,16 @@ declare class Cumulonimbus {
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
 
   /**
+   * Update one of your own sessions.
+   * @returns A promise that resolves to an API response containing the updated session.
+   * @link https://docs.alekeagle.me/api/session#patch-users-me-sessions-sid
+   */
+  public updateSelfSession(
+    sid: string,
+    name: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
+
+  /**
    * Get information about one of a user's sessions.
    * @returns A promise that resolves to an API response containing the session.
    * @link https://docs.alekeagle.me/api/session#get-users-uid-sessions-sid
@@ -108,6 +118,17 @@ declare class Cumulonimbus {
   public getUserSession(
     uid: string,
     sid: string,
+  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
+
+  /**
+   * Update one of a user's sessions.
+   * @returns A promise that resolves to an API response containing the updated session.
+   * @link https://docs.alekeagle.me/api/session#patch-users-uid-sessions-sid
+   */
+  public updateUserSession(
+    uid: string,
+    sid: string,
+    name: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.Session>>;
 
   /**
@@ -1146,7 +1167,7 @@ declare class Cumulonimbus {
    * @link https://docs.alekeagle.me/api/file#post-upload
    */
   public upload(
-    file: string | Buffer | File | Blob | ArrayBuffer,
+    file: string | File | Blob | ArrayBuffer | Uint8Array,
     type?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>>;
 }
@@ -1297,8 +1318,7 @@ declare namespace Cumulonimbus {
       type: 'totp' | 'webauthn';
     }
 
-    export interface SecondFactorTOTPRegistration
-      extends SecondFactorBaseRegistration {
+    export interface SecondFactorTOTPRegistration extends SecondFactorBaseRegistration {
       type: 'totp';
       secret: string;
       algorithm: string;
@@ -1306,7 +1326,8 @@ declare namespace Cumulonimbus {
       period: number;
     }
     export interface SecondFactorWebAuthnRegistration
-      extends SecondFactorBaseRegistration,
+      extends
+        SecondFactorBaseRegistration,
         PublicKeyCredentialCreationOptionsJSON {
       type: 'webauthn';
     }

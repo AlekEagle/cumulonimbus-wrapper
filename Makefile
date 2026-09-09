@@ -3,11 +3,13 @@ all: clean build_only
 clean:
 	rm -rf ./dist
 
+tsc = ./node_modules/.bin/tsc
+
 build_esm:
-	tsc -b tsconfig.esm.json
+	$(tsc) -b tsconfig.esm.json
 
 build_cjs:
-	tsc -b tsconfig.cjs.json
+	$(tsc) -b tsconfig.cjs.json
 	echo '{"type": "commonjs"}' > ./dist/cjs/package.json
 	echo 'module.exports = require("./index.js").default;' > ./dist/cjs/loader.js
 

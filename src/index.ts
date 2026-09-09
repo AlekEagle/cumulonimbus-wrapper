@@ -6,7 +6,7 @@ import type {
 } from '@simplewebauthn/types';
 
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '5.1.0';
+const version = '5.2.0';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -35,7 +35,10 @@ class Cumulonimbus {
   private token: string;
   private userAgent: string = USER_AGENT;
 
-  constructor(token: string, private options: Cumulonimbus.ClientOptions = {}) {
+  constructor(
+    token: string,
+    private options: Cumulonimbus.ClientOptions = {},
+  ) {
     this.token = token;
   }
 
@@ -155,9 +158,10 @@ class Cumulonimbus {
   }
 
   // Convert an object to a query string
-  private toQueryString(params: {
-    [key: string]: string | number | boolean;
-  }): string {
+  private toQueryString(
+    params?: Record<string, string | number | boolean | undefined> | null,
+  ): string {
+    if (!params) return '';
     if (
       Object.entries(params).filter(
         ([key, value]) => value !== null && value !== '' && value !== undefined,
@@ -174,7 +178,7 @@ class Cumulonimbus {
           )
           .map(
             ([key, value]) =>
-              `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+              `${encodeURIComponent(key)}=${encodeURIComponent(value!)}`,
           )
           .join('&')
       );
@@ -353,10 +357,30 @@ class Cumulonimbus {
     Cumulonimbus.Data.Session
   >((sid) => `/users/me/sessions/${sid || 'me'}`);
 
+  public updateSelfSession = this.manufactureMethod<
+    [undefined | string, string],
+    Cumulonimbus.Data.Session
+  >(
+    (sid) => `/users/me/sessions/${sid || 'me'}`,
+    'PATCH',
+    WITH_BODY,
+    (_, name) => JSON.stringify({ name }),
+  );
+
   public getUserSession = this.manufactureMethodGet<
     [string, string],
     Cumulonimbus.Data.Session
   >((uid, sid) => `/users/${uid}/sessions/${sid}`);
+
+  public updateUserSession = this.manufactureMethod<
+    [string, string, string],
+    Cumulonimbus.Data.Session
+  >(
+    (uid, sid) => `/users/${uid}/sessions/${sid}`,
+    'PATCH',
+    WITH_BODY,
+    (_, __, name) => JSON.stringify({ name }),
+  );
 
   public getSelfSessions = this.manufactureMethodGet<
     [{ limit?: number; offset?: number } | undefined],
@@ -1182,16 +1206,18 @@ class Cumulonimbus {
   // Upload Method
 
   public async upload(
-    file: string | Buffer | File | Blob | ArrayBuffer,
+    file: string | File | Blob | ArrayBuffer | Uint8Array,
     type?: string,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>> {
     const formData = new FormData();
     if (typeof file === 'string') {
       formData.append('file', new Blob([file], { type: type || 'text/plain' }));
-    } else if (globalThis.Buffer && file instanceof globalThis.Buffer) {
+    } else if (file instanceof Uint8Array) {
+      const buffer = new ArrayBuffer(file.length);
+      new Uint8Array(buffer).set(file);
       formData.append(
         'file',
-        new Blob([new Uint8Array(file).buffer], {
+        new Blob([buffer], {
           type: type || 'application/octet-stream',
         }),
       );
@@ -1364,8 +1390,7 @@ namespace Cumulonimbus {
       type: 'totp' | 'webauthn';
     }
 
-    export interface SecondFactorTOTPRegistration
-      extends SecondFactorBaseRegistration {
+    export interface SecondFactorTOTPRegistration extends SecondFactorBaseRegistration {
       type: 'totp';
       secret: string;
       algorithm: string;
@@ -1373,7 +1398,8 @@ namespace Cumulonimbus {
       period: number;
     }
     export interface SecondFactorWebAuthnRegistration
-      extends SecondFactorBaseRegistration,
+      extends
+        SecondFactorBaseRegistration,
         PublicKeyCredentialCreationOptionsJSON {
       type: 'webauthn';
     }
