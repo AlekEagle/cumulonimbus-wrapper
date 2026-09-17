@@ -1397,10 +1397,6 @@ declare namespace Cumulonimbus {
       code: 'INVALID_PASSWORD_ERROR';
       message: 'Invalid Password';
     };
-    PASSWORDS_DO_NOT_MATCH_ERROR: {
-      code: 'PASSWORDS_DO_NOT_MATCH_ERROR';
-      message: 'Passwords Do Not Match';
-    };
     INVALID_EMAIL_ERROR: {
       code: 'INVALID_EMAIL_ERROR';
       message: 'Invalid Email';
