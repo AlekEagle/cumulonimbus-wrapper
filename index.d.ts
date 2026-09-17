@@ -32,7 +32,6 @@ declare class Cumulonimbus {
     username: string,
     email: string,
     password: string,
-    confirmPassword: string,
     rememberMe?: boolean,
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus>;
@@ -379,7 +378,6 @@ declare class Cumulonimbus {
    */
   public editSelfPassword(
     newPassword: string,
-    confirmNewPassword: string,
     passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 
@@ -391,7 +389,6 @@ declare class Cumulonimbus {
   public editUserPassword(
     id: string,
     newPassword: string,
-    confirmNewPassword: string,
     passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
   ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.User>>;
 

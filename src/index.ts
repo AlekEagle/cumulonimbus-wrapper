@@ -6,7 +6,7 @@ import type {
 } from '@simplewebauthn/types';
 
 // Hard-code the version number, because it's not worth the effort to automate it
-const version = '5.2.0';
+const version = '6.0.0';
 
 // deep merge two objects without overwriting existing properties
 function merge(obj1: any, obj2: any) {
@@ -236,7 +236,6 @@ class Cumulonimbus {
     username: string,
     email: string,
     password: string,
-    confirmPassword: string,
     rememberMe: boolean = false,
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus> {
@@ -255,7 +254,6 @@ class Cumulonimbus {
           username,
           email,
           password,
-          confirmPassword,
           rememberMe,
         }),
       },
@@ -573,18 +571,12 @@ class Cumulonimbus {
   public editSelfPassword = this.manufactureMethod<
     [string, string, string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
-  >(
-    '/users/me/password',
-    'PUT',
-    WITH_BODY,
-    (newPassword, confirmNewPassword, passwordOrSFR) =>
-      JSON.stringify({
-        newPassword,
-        confirmNewPassword,
-        'password':
-          typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
-        '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
-      }),
+  >('/users/me/password', 'PUT', WITH_BODY, (newPassword, passwordOrSFR) =>
+    JSON.stringify({
+      newPassword,
+      'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
+      '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
+    }),
   );
 
   public editUserPassword = this.manufactureMethod<
@@ -594,10 +586,9 @@ class Cumulonimbus {
     (uid) => `/users/${uid}/password`,
     'PUT',
     WITH_BODY,
-    (_, newPassword, confirmNewPassword, passwordOrSFR) =>
+    (_, newPassword, passwordOrSFR) =>
       JSON.stringify({
         newPassword,
-        confirmNewPassword,
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
         '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
