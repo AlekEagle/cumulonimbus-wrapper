@@ -1,10 +1,9 @@
+import Structures from 'cumulonimbus-types';
 import type {
-  AuthenticationResponseJSON,
   RegistrationResponseJSON,
   PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/types';
-
-import Structures from 'cumulonimbus-types';
+  AuthenticationResponseJSON,
+} from '@simplewebauthn/browser';
 import {
   Errors as _Errors,
   Enums,
