@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist/esm",
     "module": "NodeNext",
-    "target": "ESNext"
+    "target": "ESNext",
+    "moduleResolution": "NodeNext"
   }
 }

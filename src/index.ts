@@ -31,6 +31,9 @@ const USER_AGENT =
   globalThis.navigator && globalThis.navigator.userAgent
     ? globalThis.navigator.userAgent
     : `Cumulonimbus-Wrapper/${version}`;
+/**
+ * The Cumulonimbus API wrapper.
+ */
 class Cumulonimbus {
   private token: string;
   private userAgent: string = USER_AGENT;
@@ -75,7 +78,7 @@ class Cumulonimbus {
     let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
     try {
-      let json = await res.json();
+      let json: any = await res.json();
       if (!res.ok) {
         // Check if the response is a 413, and if so, construct a new BODY_TOO_LARGE error, as we can't be sure the server returns a proper error (Thanks, Cloudflare!)
         if (res.status === 413) {
@@ -184,6 +187,10 @@ class Cumulonimbus {
       );
   }
 
+  /**
+   * Login to an existing account with the Cumulonimbus API.
+   * @returns A promise that resolves to a Cumulonimbus instance.
+   */
   public static async login(
     username: string,
     passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
@@ -213,7 +220,7 @@ class Cumulonimbus {
 
     let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
-    const json = await res.json();
+    const json: any = await res.json();
 
     if (!res.ok) {
       switch ((json as Cumulonimbus.Data.Error).code) {
@@ -232,6 +239,10 @@ class Cumulonimbus {
     return new Cumulonimbus(json.token, clientOptions);
   }
 
+  /**
+   * Register an account with the Cumulonimbus API.
+   * @returns A promise that resolves to a Cumulonimbus instance.
+   */
   public static async register(
     username: string,
     email: string,
@@ -261,7 +272,7 @@ class Cumulonimbus {
 
     let ratelimit = Cumulonimbus.getRatelimitHeaders(res);
 
-    const json = await res.json();
+    const json: any = await res.json();
 
     if (!res.ok) {
       switch ((json as Cumulonimbus.Data.Error).code) {
@@ -277,6 +288,11 @@ class Cumulonimbus {
 
   // API Status Methods
 
+  /**
+   * Get the API status of the Cumulonimbus API.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
   public static async getAPIStatus(
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus> {
@@ -290,9 +306,14 @@ class Cumulonimbus {
         code: 'INTERNAL_ERROR',
         message: 'Internal Server Error',
       });
-    else return await res.json();
+    else return await res.json() as any;
   }
 
+  /**
+   * Get the API status of the Cumulonimbus thumbnail API.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
   public static async getThumbnailAPIStatus(
     clientOptions?: Cumulonimbus.ClientOptions,
   ): Promise<Cumulonimbus.Data.APIStatus> {
@@ -306,13 +327,15 @@ class Cumulonimbus {
         code: 'INTERNAL_ERROR',
         message: 'Internal Server Error',
       });
-    else return await res.json();
+    else return await res.json() as any;
   }
 
   //-- Instance Methods --//
 
-  // Get Thumbnail
-
+  /**
+   * Get a thumbnail of a file from the Cumulonimbus thumbnail API.
+   * @returns A promise that resolves to an ArrayBuffer of the thumbnail.
+   */
   public async getThumbnail(
     id: string | Cumulonimbus.Data.File,
   ): Promise<ArrayBuffer> {
@@ -322,56 +345,95 @@ class Cumulonimbus {
     else return await res.arrayBuffer();
   }
 
-  // Status Methods, but for the instance, eliminating the need to pass in options
+  /**
+   * Get the API status of the Cumulonimbus API. This method is an alias of the static method and is automatically populated with the client's options.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
   public async getAPIStatus(): Promise<Cumulonimbus.Data.APIStatus> {
     return await Cumulonimbus.getAPIStatus(this.options);
   }
 
+  /**
+   * Get the API status of the Cumulonimbus thumbnail API. This method is an alias of the static method and is automatically populated with the client's options.
+   * @returns A promise that resolves to the API status.
+   * @link https://docs.alekeagle.me/api/#your-first-request
+   */
   public async getThumbnailAPIStatus(): Promise<Cumulonimbus.Data.APIStatus> {
     return await Cumulonimbus.getThumbnailAPIStatus(this.options);
   }
 
-  // Session Methods
+  /**
+   * Creates a scoped session.
+   * @returns A promise that resolves to an API response containing the created session.
+   * @link https://docs.alekeagle.me/api/session#post-users-me-sessions
+   */
   public createScopedSession = this.manufactureMethod<
-    [string, number, string | Cumulonimbus.SecondFactorResponse, boolean],
+    [
+      name: string,
+      permissionFlags: number,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+      longLived?: boolean,
+    ],
     Cumulonimbus.Data.ScopedSessionCreate
   >(
     '/users/me/sessions',
     'POST',
     WITH_BODY,
-    (name, permissionFlags, passwordOrSFR, longLived) =>
+    (name, permissionFlags, passwordOrSFR, longLived?) =>
       JSON.stringify({
         name,
         permissionFlags,
         longLived,
+        // todo: this allows passed arguments to get to the api, do we want that?
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
         '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
       }),
   );
 
+  /**
+   * Get information about one of your own sessions.
+   * @returns A promise that resolves to an API response containing the session.
+   * @link https://docs.alekeagle.me/api/session#get-users-me-sessions-sid
+   */
   public getSelfSession = this.manufactureMethodGet<
-    [undefined | string],
+    [sid?: null | string],
     Cumulonimbus.Data.Session
-  >((sid) => `/users/me/sessions/${sid || 'me'}`);
+  >((sid) => `/users/me/sessions/${sid ?? 'me'}`);
 
+  /**
+   * Update one of your own sessions.
+   * @returns A promise that resolves to an API response containing the updated session.
+   * @link https://docs.alekeagle.me/api/session#patch-users-me-sessions-sid
+   */
   public updateSelfSession = this.manufactureMethod<
-    [undefined | string, string],
+    [sid: undefined | null | string, name: string],
     Cumulonimbus.Data.Session
   >(
-    (sid) => `/users/me/sessions/${sid || 'me'}`,
+    (sid) => `/users/me/sessions/${sid ?? 'me'}`,
     'PATCH',
     WITH_BODY,
     (_, name) => JSON.stringify({ name }),
   );
 
+  /**
+   * Get information about one of a user's sessions.
+   * @returns A promise that resolves to an API response containing the session.
+   * @link https://docs.alekeagle.me/api/session#get-users-uid-sessions-sid
+   */
   public getUserSession = this.manufactureMethodGet<
-    [string, string],
+    [uid: string, sid: string],
     Cumulonimbus.Data.Session
   >((uid, sid) => `/users/${uid}/sessions/${sid}`);
 
+  /**
+   * Update one of a user's sessions.
+   * @returns A promise that resolves to an API response containing the updated session.
+   * @link https://docs.alekeagle.me/api/session#patch-users-uid-sessions-sid
+   */
   public updateUserSession = this.manufactureMethod<
-    [string, string, string],
+    [uid: string, sid: string, name: string],
     Cumulonimbus.Data.Session
   >(
     (uid, sid) => `/users/${uid}/sessions/${sid}`,
@@ -380,35 +442,65 @@ class Cumulonimbus {
     (_, __, name) => JSON.stringify({ name }),
   );
 
+  /**
+   * Get a list of your own sessions.
+   * @returns A promise that resolves to an API response containing the sessions.
+   * @link https://docs.alekeagle.me/api/session#get-users-me-sessions
+   */
   public getSelfSessions = this.manufactureMethodGet<
-    [{ limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.Session, 'id' | 'name'>>
+    [options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.Session, 'id' | 'name'>>
   >((options) => `/users/me/sessions${this.toQueryString(options)}`);
 
+  /**
+   * Get a list of a user's sessions.
+   * @returns A promise that resolves to an API response containing the sessions.
+   * @link https://docs.alekeagle.me/api/session#get-users-uid-sessions
+   */
   public getUserSessions = this.manufactureMethodGet<
-    [string, { limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.Session, 'id' | 'name'>>
+    [uid: string, options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.Session, 'id' | 'name'>>
   >((uid, options) => `/users/${uid}/sessions${this.toQueryString(options)}`);
 
+  /**
+   * Delete one of your own sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-me-sessions-sid
+   */
   public deleteSelfSession = this.manufactureMethod<
-    [string | undefined],
+    [sid?: null | string],
     Cumulonimbus.Data.Success<'DELETE_SESSION_SUCCESS'>
-  >((sid) => `/users/me/sessions/${sid || 'me'}`, 'DELETE');
+  >((sid) => `/users/me/sessions/${sid ?? 'me'}`, 'DELETE');
 
+  /**
+   * Delete one of a user's sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions-sid
+   */
   public deleteUserSession = this.manufactureMethod<
-    [string, string],
+    [uid: string, sid: string],
     Cumulonimbus.Data.Success<'DELETE_SESSION_SUCCESS'>
   >((uid, sid) => `/users/${uid}/sessions/${sid}`, 'DELETE');
 
+  /**
+   * Delete a list of your own sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-me-sessions
+   */
   public deleteSelfSessions = this.manufactureMethod<
-    [string[]],
+    [sessionIDs: string[]],
     Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >('/users/me/sessions', 'DELETE', WITH_BODY, (sessionIDs) =>
     JSON.stringify({ ids: sessionIDs }),
   );
 
+  /**
+   * Delete a list of a user's sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions
+   */
   public deleteUserSessions = this.manufactureMethod<
-    [string, string[]],
+    [uid: string, sessionIDs: string[]],
     Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/sessions`,
@@ -417,8 +509,13 @@ class Cumulonimbus {
     (_, sessionIDs) => JSON.stringify({ ids: sessionIDs }),
   );
 
+  /**
+   * Delete all of your own sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-me-sessions-all
+   */
   public deleteAllSelfSessions = this.manufactureMethod<
-    [undefined | boolean],
+    [includeSelf?: undefined | boolean],
     Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >(
     (includeSelf) =>
@@ -428,8 +525,13 @@ class Cumulonimbus {
     'DELETE',
   );
 
+  /**
+   * Delete all of a user's sessions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/session#delete-users-uid-sessions-all
+   */
   public deleteAllUserSessions = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [uid: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/sessions/all`,
@@ -445,21 +547,45 @@ class Cumulonimbus {
 
   // User Methods
 
+  /**
+   * Get a list of all users.
+   * @returns A promise that resolves to an API response containing the users.
+   * @link https://docs.alekeagle.me/api/account#get-users
+   */
   public getUsers = this.manufactureMethodGet<
-    [{ limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.User, 'id' | 'username'>>
+    [options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.User, 'id' | 'username'>>
   >((options) => `/users${this.toQueryString(options)}`);
 
+  /**
+   * Get information about your own user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#get-users-me
+   */
   public getSelf = this.manufactureMethodGet<[], Cumulonimbus.Data.User>(
     '/users/me',
   );
 
-  public getUser = this.manufactureMethodGet<[string], Cumulonimbus.Data.User>(
-    (user) => `/users/${user}`,
-  );
+  /**
+   * Get information about a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#get-users-id
+   */
+  public getUser = this.manufactureMethodGet<
+    [id: string],
+    Cumulonimbus.Data.User
+  >((user) => `/users/${user}`);
 
+  /**
+   * Edit your own username.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-me-username
+   */
   public editSelfUsername = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      username: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.User
   >(`/users/me/username`, 'PUT', WITH_BODY, (username, passwordOrSFR) =>
     JSON.stringify({
@@ -469,8 +595,17 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Edit a user's username.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-username
+   */
   public editUserUsername = this.manufactureMethod<
-    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      id: string,
+      username: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/username`,
@@ -485,8 +620,13 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Edit your own email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-me-email
+   */
   public editSelfEmail = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [email: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(`/users/me/email`, 'PUT', WITH_BODY, (email, passwordOrSFR) =>
     JSON.stringify({
@@ -496,8 +636,17 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Edit a user's email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-email
+   */
   public editUserEmail = this.manufactureMethod<
-    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      id: string,
+      email: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/email`,
@@ -512,6 +661,11 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Verify your own email with the verification token.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#put-users-verify
+   */
   public async verifyEmail(
     token: string,
   ): Promise<
@@ -529,8 +683,13 @@ class Cumulonimbus {
     );
   }
 
+  /**
+   * Verify another user's email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-verify
+   */
   public verifyUserEmail = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/verify`,
@@ -543,18 +702,33 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Resend a verification email for your own email.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#get-users-me-verify
+   */
   public resendSelfVerificationEmail = this.manufactureMethodGet<
     [],
-    Cumulonimbus.Data.Success
+    Cumulonimbus.Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
   >('/users/me/verify');
 
+  /**
+   * Resend a verification email for another user's email.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#get-users-id-verify
+   */
   public resendUserVerificationEmail = this.manufactureMethodGet<
-    [string],
-    Cumulonimbus.Data.Success
+    [id: string],
+    Cumulonimbus.Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
   >((uid) => `/users/${uid}/verify`);
 
+  /**
+   * Unverify another user's email.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id-verify
+   */
   public unverifyUserEmail = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/verify`,
@@ -568,8 +742,16 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Edit your own password.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-me-password
+   */
   public editSelfPassword = this.manufactureMethod<
-    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      newPassword: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.User
   >('/users/me/password', 'PUT', WITH_BODY, (newPassword, passwordOrSFR) =>
     JSON.stringify({
@@ -579,8 +761,17 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Edit a user's password.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-password
+   */
   public editUserPassword = this.manufactureMethod<
-    [string, string, string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      id: string,
+      newPassword: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/password`,
@@ -595,8 +786,13 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Grants a user staff permissions.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-staff
+   */
   public grantStaff = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/staff`,
@@ -604,14 +800,20 @@ class Cumulonimbus {
     WITH_BODY,
     (_, passwordOrSFR) =>
       JSON.stringify({
+        // todo: more leakage of params directly to api
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
         '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
       }),
   );
 
+  /**
+   * Revokes a user's staff permissions.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id-staff
+   */
   public revokeStaff = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/staff`,
@@ -625,8 +827,17 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Ban a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-ban
+   */
   public banUser = this.manufactureMethod<
-    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      user: string,
+      reason: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/ban`,
@@ -635,14 +846,20 @@ class Cumulonimbus {
     (_, reason, passwordOrSFR) =>
       JSON.stringify({
         reason,
+        // todo: more leakage of params directly to api
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
         '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
       }),
   );
 
+  /**
+   * Unban a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id-ban
+   */
   public unbanUser = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/ban`,
@@ -656,13 +873,23 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Selects a domain and subdomain for yourself.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-me-domain
+   */
   public editSelfDomainSelection = this.manufactureMethod<
-    [{ domain: string; subdomain?: string }],
+    [options: { domain: string; subdomain?: string }],
     Cumulonimbus.Data.User
   >('/users/me/domain', 'PUT', WITH_BODY, JSON.stringify);
 
+  /**
+   * Select a domain and subdomain for a user.
+   * @returns A promise that resolves to an API response containing the user.
+   * @link https://docs.alekeagle.me/api/account#put-users-id-domain
+   */
   public editUserDomainSelection = this.manufactureMethod<
-    [string, { domain: string; subdomain?: string }],
+    [id: string, options: { domain: string; subdomain?: string }],
     Cumulonimbus.Data.User
   >(
     (uid) => `/users/${uid}/domain`,
@@ -671,8 +898,13 @@ class Cumulonimbus {
     (_, options) => JSON.stringify(options),
   );
 
+  /**
+   * Delete your own user.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#delete-users-me
+   */
   public deleteSelf = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_USER_SUCCESS'>
   >('/users/me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -681,9 +913,14 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Delete a user.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#delete-users-id
+   */
   public deleteUser = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success
+    [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
+    Cumulonimbus.Data.Success<'DELETE_USER_SUCCESS'>
   >(
     (uid) => `/users/${uid}`,
     'DELETE',
@@ -696,9 +933,17 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Delete a list of specified users.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/account#delete-users
+   */
   public deleteUsers = this.manufactureMethod<
-    [string[], string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success
+    [
+      userIDs: string[],
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
+    Cumulonimbus.Data.Success<'DELETE_USERS_SUCCESS'>
   >('/users', 'DELETE', WITH_BODY, (userIDs, passwordOrSFR) =>
     JSON.stringify({
       'ids': userIDs,
@@ -709,90 +954,158 @@ class Cumulonimbus {
 
   // Domain Methods
 
+  /**
+   * Fetches a list of domains.
+   * @returns A promise that resolves to an API response containing the domains.
+   * @link https://docs.alekeagle.me/api/domain#get-domains
+   */
   public getDomains = this.manufactureMethodGet<
     [
-      {
+      options?: {
         limit?: number | 'all';
         offset?: number;
       },
     ],
-    Cumulonimbus.Data.List<
-      Extract<Cumulonimbus.Data.Domain, 'id' | 'subdomains'>
-    >
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.Domain, 'id' | 'subdomains'>>
   >((options) => {
-    const { limit, offset } = options || {};
+    const { limit, offset } = options ?? {};
     return `/domains${this.toQueryString({
       limit: limit === 'all' ? -1 : limit,
       offset: limit === 'all' ? undefined : offset,
     })}`;
   });
 
+  /**
+   * Fetches a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#get-domains-id
+   */
   public getDomain = this.manufactureMethodGet<
-    [string],
+    [id: string],
     Cumulonimbus.Data.Domain
   >((id) => `/domains/${id}`);
 
+  /**
+   * Creates a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#post-domains
+   */
   public createDomain = this.manufactureMethod<
-    [string, boolean | undefined],
+    [id: string, subdomains?: boolean | undefined],
     Cumulonimbus.Data.Domain
   >('/domains', 'POST', WITH_BODY, (id, subdomains) =>
     JSON.stringify({ id, subdomains }),
   );
 
+  /**
+   * Allows subdomains for a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#put-domains-id-subdomains
+   */
   public allowSubdomains = this.manufactureMethod<
-    [string],
+    [id: string],
     Cumulonimbus.Data.Domain
   >((id) => `/domains/${id}/subdomains`, 'PUT');
 
+  /**
+   * Disallows subdomains for a domain.
+   * @returns A promise that resolves to an API response containing the domain.
+   * @link https://docs.alekeagle.me/api/domain#delete-domains-id-subdomains
+   */
   public disallowSubdomains = this.manufactureMethod<
-    [string],
+    [id: string],
     Cumulonimbus.Data.Domain
   >((id) => `/domains/${id}/subdomains`, 'DELETE');
 
+  /**
+   * Deletes a domain.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/domain#delete-domains-id
+   */
   public deleteDomain = this.manufactureMethod<
-    [string],
-    Cumulonimbus.Data.Success
+    [id: string],
+    Cumulonimbus.Data.Success<'DELETE_DOMAIN_SUCCESS'>
   >((id) => `/domains/${id}`, 'DELETE');
 
+  /**
+   * Deletes a list of domains.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/domain#delete-domains
+   */
   public deleteDomains = this.manufactureMethod<
-    [string[]],
-    Cumulonimbus.Data.Success
+    [domainIDs: string[]],
+    Cumulonimbus.Data.Success<'DELETE_DOMAINS_SUCCESS'>
   >('/domains', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   // File Methods
 
+  /**
+   * Gets a list of all files.
+   * @returns A promise that resolves to an API response containing the files.
+   * @link https://docs.alekeagle.me/api/file#get-files
+   */
   public getAllFiles = this.manufactureMethodGet<
-    [{ limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+    [options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.File, 'id' | 'name'>>
   >((options) => `/files${this.toQueryString(options)}`);
 
+  /**
+   * Gets a list of all files belonging to you.
+   * @returns A promise that resolves to an API response containing the files.
+   * @link https://docs.alekeagle.me/api/file#get-users-me-files
+   */
   public getSelfFiles = this.manufactureMethodGet<
-    [{ limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+    [options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.File, 'id' | 'name'>>
   >((options) => `/users/me/files${this.toQueryString(options)}`);
 
+  /**
+   * Gets a list of all files belonging to a user.
+   * @returns  A promise that resolves to an API response containing the files.
+   * @link https://docs.alekeagle.me/api/file#get-users-uid-files
+   */
   public getUserFiles = this.manufactureMethodGet<
-    [string, { limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<Extract<Cumulonimbus.Data.File, 'id' | 'name'>>
+    [uid: string, options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.File, 'id' | 'name'>>
   >((uid, options) => `/users/${uid}/files${this.toQueryString(options)}`);
 
+  /**
+   * Fetches an arbitrary file using only its ID.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#get-files-id
+   */
   public getArbitraryFile = this.manufactureMethodGet<
-    [string],
+    [id: string],
     Cumulonimbus.Data.File
   >((id) => `/files/${id}`);
 
+  /**
+   * Fetches a file belonging to you using its ID.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#get-users-me-files-id
+   */
   public getSelfFile = this.manufactureMethodGet<
-    [string],
+    [id: string],
     Cumulonimbus.Data.File
   >((id) => `/users/me/files/${id}`);
 
+  /**
+   * Fetches a file belonging to a user using its ID.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#get-users-uid-files-id
+   */
   public getUserFile = this.manufactureMethodGet<
-    [string, string],
+    [uid: string, id: string],
     Cumulonimbus.Data.File
   >((uid, id) => `/users/${uid}/files/${id}`);
 
+  /**
+   * Edit the display name of a file belonging to you.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-me-files-id-name
+   */
   public editSelfFilename = this.manufactureMethod<
-    [string, string],
+    [id: string, name: string],
     Cumulonimbus.Data.File
   >(
     (id) => `/users/me/files/${id}/name`,
@@ -801,8 +1114,13 @@ class Cumulonimbus {
     (_, name) => JSON.stringify({ name }),
   );
 
+  /**
+   * Edit the display name of a file belonging to a user.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-uid-files-id-name
+   */
   public editUserFilename = this.manufactureMethod<
-    [string, string, string],
+    [uid: string, id: string, name: string],
     Cumulonimbus.Data.File
   >(
     (uid, id) => `/users/${uid}/files/${id}/name`,
@@ -811,18 +1129,33 @@ class Cumulonimbus {
     (_, __, name) => JSON.stringify({ name }),
   );
 
+  /**
+   * Delete the display name of a file belonging to you.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files-id-name
+   */
   public deleteSelfFilename = this.manufactureMethod<
-    [string],
+    [id: string],
     Cumulonimbus.Data.File
   >((id) => `/users/me/files/${id}/name`, 'DELETE');
 
+  /**
+   * Delete the display name of a file belonging to a user.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files-id-name
+   */
   public deleteUserFilename = this.manufactureMethod<
-    [string, string],
+    [uid: string, id: string],
     Cumulonimbus.Data.File
   >((uid, id) => `/users/${uid}/files/${id}/name`, 'DELETE');
 
+  /**
+   * Edit the extension of a file belonging to you.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-me-files-id-extension
+   */
   public editSelfFileExtension = this.manufactureMethod<
-    [string, string],
+    [id: string, extension: string],
     Cumulonimbus.Data.File
   >(
     (id) => `/users/me/files/${id}/extension`,
@@ -831,8 +1164,13 @@ class Cumulonimbus {
     (_, extension) => JSON.stringify({ extension }),
   );
 
+  /**
+   * Edit the extension of a file belonging to a user.
+   * @returns A promise that resolves to an API response containing the file.
+   * @link https://docs.alekeagle.me/api/file#put-users-uid-files-id-extension
+   */
   public editUserFileExtension = this.manufactureMethod<
-    [string, string, string],
+    [uid: string, id: string, extension: string],
     Cumulonimbus.Data.File
   >(
     (uid, id) => `/users/${uid}/files/${id}/extension`,
@@ -841,23 +1179,43 @@ class Cumulonimbus {
     (_, __, extension) => JSON.stringify({ extension }),
   );
 
+  /**
+   * Delete a file belonging to you.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files-id
+   */
   public deleteSelfFile = this.manufactureMethod<
-    [string],
+    [id: string],
     Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
   >((id) => `/users/me/files/${id}`, 'DELETE');
 
+  /**
+   * Delete a file belonging to a user.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files-id
+   */
   public deleteUserFile = this.manufactureMethod<
-    [string, string],
+    [uid: string, id: string],
     Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
   >((uid, id) => `/users/${uid}/files/${id}`, 'DELETE');
 
+  /**
+   * Delete a list of files belonging to you.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files
+   */
   public deleteSelfFiles = this.manufactureMethod<
-    [string[]],
+    [ids: string[]],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >('/users/me/files', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
+  /**
+   * Delete a list of files belonging to a user.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files
+   */
   public deleteUserFiles = this.manufactureMethod<
-    [string, string[]],
+    [uid: string, ids: string[]],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >(
     (uid) => `/users/${uid}/files`,
@@ -866,13 +1224,23 @@ class Cumulonimbus {
     (_, ids) => JSON.stringify({ ids }),
   );
 
+  /**
+   * Delete an arbitrary list of files using only their IDs.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-files
+   */
   public deleteArbitraryFiles = this.manufactureMethod<
-    [string[]],
+    [ids: string[]],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >('/files', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
+  /**
+   * Delete all of your own files.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-me-files-all
+   */
   public deleteAllSelfFiles = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >('/users/me/files/all', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -881,8 +1249,13 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Delete all of a user's files.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/file#delete-users-uid-files-all
+   */
   public deleteAllUserFiles = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
   >(
     (uid) => `/users/${uid}/files/all`,
@@ -890,6 +1263,7 @@ class Cumulonimbus {
     WITH_BODY,
     (_, passwordOrSFR) =>
       JSON.stringify({
+        // more leakage
         'password':
           typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
         '2fa': typeof passwordOrSFR === 'string' ? undefined : passwordOrSFR,
@@ -898,21 +1272,36 @@ class Cumulonimbus {
 
   // Instruction Methods
 
+  /**
+   * Get a list of all instructions.
+   * @returns A promise that resolves to an API response containing the instructions.
+   * @link https://docs.alekeagle.me/api/instruction#get-instructions
+   */
   public getInstructions = this.manufactureMethodGet<
-    [{ limit?: number; offset?: number } | undefined],
+    [options?: { limit?: number; offset?: number }],
     Cumulonimbus.Data.List<
-      Extract<Cumulonimbus.Data.Instruction, 'id' | 'name' | 'description'>
+      Pick<Cumulonimbus.Data.Instruction, 'id' | 'name' | 'description'>
     >
   >((options) => `/instructions${this.toQueryString(options)}`);
 
+  /**
+   * Get information about an instruction.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#get-instructions-id
+   */
   public getInstruction = this.manufactureMethodGet<
-    [string],
+    [id: string],
     Cumulonimbus.Data.Instruction
   >((id) => `/instructions/${id}`);
 
+  /**
+   * Create an instruction.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#post-instructions
+   */
   public createInstruction = this.manufactureMethod<
     [
-      {
+      options: {
         id: string;
         name: string;
         description: string;
@@ -924,8 +1313,13 @@ class Cumulonimbus {
     Cumulonimbus.Data.Instruction
   >('/instructions', 'POST', WITH_BODY, (options) => JSON.stringify(options));
 
+  /**
+   * Edit an instruction's name.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-name
+   */
   public editInstructionName = this.manufactureMethod<
-    [string, string],
+    [id: string, name: string],
     Cumulonimbus.Data.Instruction
   >(
     (id) => `/instructions/${id}/name`,
@@ -934,8 +1328,13 @@ class Cumulonimbus {
     (_, name) => JSON.stringify({ name }),
   );
 
+  /**
+   * Edit an instruction's description.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-description
+   */
   public editInstructionDescription = this.manufactureMethod<
-    [string, string],
+    [id: string, description: string],
     Cumulonimbus.Data.Instruction
   >(
     (id) => `/instructions/${id}/description`,
@@ -944,8 +1343,13 @@ class Cumulonimbus {
     (_, description) => JSON.stringify({ description }),
   );
 
+  /**
+   * Edit an instruction's content.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-content
+   */
   public editInstructionFile = this.manufactureMethod<
-    [string, string, string | undefined],
+    [id: string, content: string, filename?: string | undefined],
     Cumulonimbus.Data.Instruction
   >(
     (id) => `/instructions/${id}/file`,
@@ -954,8 +1358,13 @@ class Cumulonimbus {
     (_, content, filename) => JSON.stringify({ content, filename }),
   );
 
+  /**
+   * Edit an instruction's steps.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-steps
+   */
   public editInstructionSteps = this.manufactureMethod<
-    [string, string[]],
+    [id: string, steps: string[]],
     Cumulonimbus.Data.Instruction
   >(
     (id) => `/instructions/${id}/steps`,
@@ -964,25 +1373,48 @@ class Cumulonimbus {
     (_, steps) => JSON.stringify({ steps }),
   );
 
+  /**
+   * Delete an instruction's name.
+   * @returns A promise that resolves to an API response containing the instruction.
+   * @link https://docs.alekeagle.me/api/instruction#delete-instructions-id-name
+   */
   public deleteInstruction = this.manufactureMethod<
-    [string],
-    Cumulonimbus.Data.Success
+    [id: string],
+    Cumulonimbus.Data.Success<'DELETE_INSTRUCTION_SUCCESS'>
   >((id) => `/instructions/${id}`, 'DELETE');
 
+  /**
+   * Delete a list of instructions.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/instruction#delete-instructions
+   */
   public deleteInstructions = this.manufactureMethod<
-    [string[]],
-    Cumulonimbus.Data.Success
+    [ids: string[]],
+    Cumulonimbus.Data.Success<'DELETE_INSTRUCTIONS_SUCCESS'>
   >('/instructions', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   // KillSwitch Methods
 
+  /**
+   * Fetches a list of kill switches.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#get-killswitches
+   */
   public getKillSwitches = this.manufactureMethodGet<
     [],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
   >('/killswitches');
 
+  /**
+   * Enables the specified kill switch.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#put-killswitches-id
+   */
   public enableKillSwitch = this.manufactureMethod<
-    [Cumulonimbus.KillSwitches, string | Cumulonimbus.SecondFactorResponse],
+    [
+      id: Cumulonimbus.KillSwitches,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
   >(
     (id) => `/killswitches/${id}`,
@@ -996,8 +1428,16 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Disables the specified kill switch.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches-id
+   */
   public disableKillSwitch = this.manufactureMethod<
-    [Cumulonimbus.KillSwitches, string | Cumulonimbus.SecondFactorResponse],
+    [
+      id: Cumulonimbus.KillSwitches,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
   >(
     (id) => `/killswitches/${id}`,
@@ -1011,8 +1451,13 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Disables all kill switches.
+   * @returns A promise that resolves to an API response containing the kill switches.
+   * @link https://docs.alekeagle.me/api/killswitches#delete-killswitches
+   */
   public disableAllKillSwitches = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
   >('/killswitches', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -1023,8 +1468,13 @@ class Cumulonimbus {
 
   // Second Factor Methods
 
+  /**
+   * Begin the process of registering a TOTP second factor.
+   * @returns A promise that resolves to an API response containing the data to complete the registration.
+   * @link https://docs.alekeagle.me/api/secondfactor#post-users-me-2fa-totp
+   */
   public beginTOTPRegistration = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.SecondFactorTOTPRegistration
   >('/users/me/2fa/totp', 'POST', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -1033,15 +1483,25 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Complete the registration of a TOTP second factor.
+   * @returns A promise that resolves to an API response containing the second factor.
+   * @link https://docs.alekeagle.me/api/secondfactor#post-users-me-2fa-totp-confirm
+   */
   public confirmTOTPRegistration = this.manufactureMethod<
-    [string, string, string],
+    [token: string, name: string, code: string],
     Cumulonimbus.Data.SecondFactorRegisterSuccess
   >('/users/me/2fa/totp/confirm', 'POST', WITH_BODY, (token, name, code) =>
     JSON.stringify({ token, code, name }),
   );
 
+  /**
+   * Begin the process of registering a WebAuthn second factor.
+   * @returns A promise that resolves to an API response containing the data to complete the registration.
+   * @link https://docs.alekeagle.me/api/secondfactor#post-users-me-2fa-webauthn
+   */
   public beginWebAuthnRegistration = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.SecondFactorWebAuthnRegistration
   >('/users/me/2fa/webauthn/', 'POST', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -1050,8 +1510,13 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Complete the registration of a WebAuthn second factor.
+   * @returns A promise that resolves to an API response containing the second factor.
+   * @link https://docs.alekeagle.me/api/secondfactor#post-users-me-2fa-webauthn-confirm
+   */
   public confirmWebAuthnRegistration = this.manufactureMethod<
-    [string, string, RegistrationResponseJSON],
+    [token: string, name: string, response: RegistrationResponseJSON],
     Cumulonimbus.Data.SecondFactorRegisterSuccess
   >(
     '/users/me/2fa/webauthn/confirm',
@@ -1060,8 +1525,13 @@ class Cumulonimbus {
     (token, name, response) => JSON.stringify({ token, response, name }),
   );
 
+  /**
+   * Regenerate second factor backup codes.
+   * @returns A promise that resolves to an API response containing the backup codes.
+   * @link https://docs.alekeagle.me/api/secondfactor#post-users-me-2fa-backup
+   */
   public regenerateBackupCodes = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.SecondFactorBackupRegisterSuccess
   >('/users/me/2fa/backup', 'POST', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -1070,32 +1540,53 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Get a list of your second factors.
+   * @returns A promise that resolves to an API response containing the second factors.
+   * @link https://docs.alekeagle.me/api/secondfactor#get-users-me-2fa
+   */
   public getSelfSecondFactors = this.manufactureMethodGet<
-    [{ limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<
-      Extract<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>
-    >
+    [options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>>
   >((options) => `/users/me/2fa${this.toQueryString(options)}`);
 
+  /**
+   * Get a list of a user's second factors.
+   * @returns A promise that resolves to an API response containing the second factors.
+   * @link https://docs.alekeagle.me/api/secondfactor#get-users-id-2fa
+   */
   public getUserSecondFactors = this.manufactureMethodGet<
-    [string, { limit?: number; offset?: number } | undefined],
-    Cumulonimbus.Data.List<
-      Extract<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>
-    >
+    [id: string, options?: { limit?: number; offset?: number }],
+    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>>
   >((uid, options) => `/users/${uid}/2fa${this.toQueryString(options)}`);
 
+  /**
+   * Get information about one of your own second factors.
+   * @returns A promise that resolves to an API response containing the second factor.
+   * @link https://docs.alekeagle.me/api/secondfactor#get-users-me-2fa-id
+   */
   public getSelfSecondFactor = this.manufactureMethodGet<
-    [string],
+    [id: string],
     Cumulonimbus.Data.SecondFactor
   >((id) => `/users/me/2fa/${id}`);
 
+  /**
+   * Get information about one of a user's second factors.
+   * @returns A promise that resolves to an API response containing the second factor.
+   * @link https://docs.alekeagle.me/api/secondfactor#get-users-uid-2fa-id
+   */
   public getUserSecondFactor = this.manufactureMethodGet<
-    [string, string],
+    [uid: string, id: string],
     Cumulonimbus.Data.SecondFactor
   >((uid, id) => `/users/${uid}/2fa/${id}`);
 
+  /**
+   * Delete one of your own second factors.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/secondfactor#delete-users-me-2fa-id
+   */
   public deleteSelfSecondFactor = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
   >(
     (id) => `/users/me/2fa/${id}`,
@@ -1109,8 +1600,17 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Delete one of a user's second factors.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/secondfactor#delete-users-uid-2fa-id
+   */
   public deleteUserSecondFactor = this.manufactureMethod<
-    [string, string, string | Cumulonimbus.SecondFactorResponse],
+    [
+      uid: string,
+      id: string,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
   >(
     (uid, id) => `/users/${uid}/2fa/${id}`,
@@ -1124,8 +1624,13 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Delete a list of your own second factors.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/secondfactor#delete-users-me-2fa
+   */
   public deleteSelfSecondFactors = this.manufactureMethod<
-    [string[], string | Cumulonimbus.SecondFactorResponse],
+    [ids: string[], passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >('/users/me/2fa', 'DELETE', WITH_BODY, (ids, passwordOrSFR) =>
     JSON.stringify({
@@ -1135,8 +1640,17 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Delete a list of a user's second factors.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/secondfactor#delete-users-uid-2fa
+   */
   public deleteUserSecondFactors = this.manufactureMethod<
-    [string, string[], string | Cumulonimbus.SecondFactorResponse],
+    [
+      uid: string,
+      ids: string[],
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
     Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/2fa`,
@@ -1151,8 +1665,13 @@ class Cumulonimbus {
       }),
   );
 
+  /**
+   * Delete all of your own second factors.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/secondfactor#delete-users-me-2fa-all
+   */
   public deleteAllSelfSecondFactors = this.manufactureMethod<
-    [string | Cumulonimbus.SecondFactorResponse],
+    [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >('/users/me/2fa/all', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
@@ -1161,8 +1680,13 @@ class Cumulonimbus {
     }),
   );
 
+  /**
+   * Delete all of a user's second factors.
+   * @returns A promise that resolves to an API response containing the success message.
+   * @link https://docs.alekeagle.me/api/secondfactor#delete-users-uid-2fa-all
+   */
   public deleteAllUserSecondFactors = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
+    [uid: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
     Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/2fa/all`,
@@ -1178,14 +1702,28 @@ class Cumulonimbus {
 
   // Utility Methods
 
+  /**
+   * Get the current LogLevel.
+   * @returns A promise that resolves to an API response containing the log level.
+   * @link https://docs.alekeagle.me/api/utility#get-loglevel
+   *
+   */
   public getLogLevel = this.manufactureMethodGet<
     [],
-    Cumulonimbus.Data.List<Cumulonimbus.Data.LogLevel>
+    Cumulonimbus.Data.LogLevel
   >('/loglevel');
 
+  /**
+   * Set the LogLevel.
+   * @returns A promise that resolves to an API response containing the log level.
+   * @link https://docs.alekeagle.me/api/utility#patch-loglevel
+   */
   public setLogLevel = this.manufactureMethod<
-    [string, string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.LogLevel
+    [
+      name: Cumulonimbus.LogLevel,
+      passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
+    ],
+    Cumulonimbus.Data.LogLevel
   >('/loglevel', 'PATCH', WITH_BODY, (name, passwordOrSFR) =>
     JSON.stringify({
       name,
@@ -1196,6 +1734,11 @@ class Cumulonimbus {
 
   // Upload Method
 
+  /**
+   * Upload a file to the Cumulonimbus API.
+   * @returns A promise that resolves to an API response containing URLs to the file.
+   * @link https://docs.alekeagle.me/api/file#post-upload
+   */
   public async upload(
     file: string | File | Blob | ArrayBuffer | Uint8Array,
     type?: string,
@@ -1239,7 +1782,7 @@ class Cumulonimbus {
 namespace Cumulonimbus {
   export const BASE_URL = 'https://alekeagle.me/api';
   export const BASE_THUMBNAIL_URL = 'https://previews.alekeagle.me';
-  export const VERSION = version;
+  export const VERSION: string = version;
 
   export interface RatelimitData {
     limit: number;
@@ -1352,6 +1895,7 @@ namespace Cumulonimbus {
 
     export interface File {
       id: string;
+      name: string;
       userID: string;
       size: number;
       createdAt: string;
@@ -1624,40 +2168,46 @@ namespace Cumulonimbus {
     ratelimit: RatelimitData | null;
     constructor(response: Data.Error, ratelimit: RatelimitData | null = null) {
       super(response.message as string);
-      Object.setPrototypeOf(this, ResponseError.prototype);
       this.code = response.code as T;
       this.message = response.message;
       this.ratelimit = ratelimit;
       Object.assign(this, response);
     }
+
+    get name() {
+      return this.constructor.name;
+    }
   }
 
   export class MissingFieldsError extends ResponseError<'MISSING_FIELDS_ERROR'> {
+    fields!: string[];
     constructor(
       response: Errors['MISSING_FIELDS_ERROR'],
       ratelimit: RatelimitData | null = null,
     ) {
       super(response, ratelimit);
-      Object.setPrototypeOf(this, MissingFieldsError.prototype);
     }
   }
 
   export class SecondFactorChallengeRequiredError extends ResponseError<'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'> {
+  // These are already assigned in the parent class, so we can safely declare them without initializing them
+  	token!: string;
+	  types!: ('totp' | 'backup' | 'webauthn')[];
+	  challenge!: PublicKeyCredentialRequestOptionsJSON | undefined;
     constructor(
       response: Errors['SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'],
       ratelimit: RatelimitData | null = null,
     ) {
       super(response, ratelimit);
-      Object.setPrototypeOf(this, SecondFactorChallengeRequiredError.prototype);
     }
   }
 
   export class ThumbnailError extends Error {
+    name = 'ThumbnailError';
     code: number;
     message: string;
     constructor(response: Response) {
       super(response.statusText);
-      Object.setPrototypeOf(this, ThumbnailError.prototype);
       this.code = response.status;
       this.message = response.statusText;
     }
