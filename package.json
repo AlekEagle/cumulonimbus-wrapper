@@ -1,16 +1,16 @@
 {
   "name": "cumulonimbus-wrapper",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "description": "A wrapper for the Cumulonimbus API.",
   "type": "module",
   "exports": {
     "import": "./dist/esm/index.js",
     "require": "./dist/cjs/loader.js",
-    "types": "./index.d.ts"
+    "types": "./dist/types/index.d.ts"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
-  "types": "index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
     "check": "tsc --noEmit --watch"
   },
