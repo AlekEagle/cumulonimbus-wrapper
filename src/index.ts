@@ -1879,9 +1879,13 @@ namespace Cumulonimbus {
   export type Errors = _Errors;
   export type Successes = _Successes;
   export const KillSwitches = Enums.KillSwitches;
+  export type KillSwitches = Enums.KillSwitches;
   export const PermissionFlags = Enums.PermissionFlags;
+  export type PermissionFlags = Enums.PermissionFlags;
   export const PermissionGroups = Enums.PermissionGroups;
+  export type PermissionGroups = Enums.PermissionGroups;
   export const LogLevel = Enums.LogLevel;
+  export type LogLevel = Enums.LogLevel;
 }
 
 export default Cumulonimbus;
