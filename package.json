@@ -36,6 +36,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "cumulonimbus-types": "file:../cumulonimbus-types",
     "prettier": "^3.9.10"
   }
 }

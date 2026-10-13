@@ -1,9 +1,11 @@
 import type {
   AuthenticationResponseJSON,
   RegistrationResponseJSON,
-  PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/types';
+
+import type Data from 'cumulonimbus-types';
+import { Errors, Enums } from 'cumulonimbus-types';
 
 // Hard-code the version number, because it's not worth the effort to automate it
 const version = 'hiiamversionsentinelpleasereplacemewiththeversionatbuildtimethanks';
@@ -223,7 +225,7 @@ class Cumulonimbus {
     const json: any = await res.json();
 
     if (!res.ok) {
-      switch ((json as Cumulonimbus.Data.Error).code) {
+      switch ((json as Data.Error).code) {
         case 'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR':
           throw new Cumulonimbus.SecondFactorChallengeRequiredError(
             json,
@@ -275,7 +277,7 @@ class Cumulonimbus {
     const json: any = await res.json();
 
     if (!res.ok) {
-      switch ((json as Cumulonimbus.Data.Error).code) {
+      switch ((json as Data.Error).code) {
         case 'MISSING_FIELDS_ERROR':
           throw new Cumulonimbus.MissingFieldsError(json, ratelimit);
         default:
@@ -295,7 +297,7 @@ class Cumulonimbus {
    */
   public static async getAPIStatus(
     clientOptions?: Cumulonimbus.ClientOptions,
-  ): Promise<Cumulonimbus.Data.APIStatus> {
+  ): Promise<Data.APIStatus> {
     const res = await fetch(
       clientOptions && clientOptions.baseURL
         ? clientOptions.baseURL
@@ -306,7 +308,7 @@ class Cumulonimbus {
         code: 'INTERNAL_ERROR',
         message: 'Internal Server Error',
       });
-    else return await res.json() as any;
+    else return (await res.json()) as any;
   }
 
   /**
@@ -316,7 +318,7 @@ class Cumulonimbus {
    */
   public static async getThumbnailAPIStatus(
     clientOptions?: Cumulonimbus.ClientOptions,
-  ): Promise<Cumulonimbus.Data.APIStatus> {
+  ): Promise<Data.APIStatus> {
     const res = await fetch(
       clientOptions && clientOptions.baseThumbnailURL
         ? clientOptions.baseThumbnailURL
@@ -327,7 +329,7 @@ class Cumulonimbus {
         code: 'INTERNAL_ERROR',
         message: 'Internal Server Error',
       });
-    else return await res.json() as any;
+    else return (await res.json()) as any;
   }
 
   //-- Instance Methods --//
@@ -336,9 +338,7 @@ class Cumulonimbus {
    * Get a thumbnail of a file from the Cumulonimbus thumbnail API.
    * @returns A promise that resolves to an ArrayBuffer of the thumbnail.
    */
-  public async getThumbnail(
-    id: string | Cumulonimbus.Data.File,
-  ): Promise<ArrayBuffer> {
+  public async getThumbnail(id: string | Data.File): Promise<ArrayBuffer> {
     const fileID = typeof id === 'string' ? id : id.id;
     const res = await fetch(`${this.options.baseThumbnailURL}/${fileID}`);
     if (!res.ok) throw new Cumulonimbus.ThumbnailError(res);
@@ -350,7 +350,7 @@ class Cumulonimbus {
    * @returns A promise that resolves to the API status.
    * @link https://docs.alekeagle.me/api/#your-first-request
    */
-  public async getAPIStatus(): Promise<Cumulonimbus.Data.APIStatus> {
+  public async getAPIStatus(): Promise<Data.APIStatus> {
     return await Cumulonimbus.getAPIStatus(this.options);
   }
 
@@ -359,7 +359,7 @@ class Cumulonimbus {
    * @returns A promise that resolves to the API status.
    * @link https://docs.alekeagle.me/api/#your-first-request
    */
-  public async getThumbnailAPIStatus(): Promise<Cumulonimbus.Data.APIStatus> {
+  public async getThumbnailAPIStatus(): Promise<Data.APIStatus> {
     return await Cumulonimbus.getThumbnailAPIStatus(this.options);
   }
 
@@ -375,7 +375,7 @@ class Cumulonimbus {
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
       longLived?: boolean,
     ],
-    Cumulonimbus.Data.ScopedSessionCreate
+    Data.ScopedSessionCreate
   >(
     '/users/me/sessions',
     'POST',
@@ -399,7 +399,7 @@ class Cumulonimbus {
    */
   public getSelfSession = this.manufactureMethodGet<
     [sid?: null | string],
-    Cumulonimbus.Data.Session
+    Data.Session
   >((sid) => `/users/me/sessions/${sid ?? 'me'}`);
 
   /**
@@ -409,7 +409,7 @@ class Cumulonimbus {
    */
   public updateSelfSession = this.manufactureMethod<
     [sid: undefined | null | string, name: string],
-    Cumulonimbus.Data.Session
+    Data.Session
   >(
     (sid) => `/users/me/sessions/${sid ?? 'me'}`,
     'PATCH',
@@ -424,7 +424,7 @@ class Cumulonimbus {
    */
   public getUserSession = this.manufactureMethodGet<
     [uid: string, sid: string],
-    Cumulonimbus.Data.Session
+    Data.Session
   >((uid, sid) => `/users/${uid}/sessions/${sid}`);
 
   /**
@@ -434,7 +434,7 @@ class Cumulonimbus {
    */
   public updateUserSession = this.manufactureMethod<
     [uid: string, sid: string, name: string],
-    Cumulonimbus.Data.Session
+    Data.Session
   >(
     (uid, sid) => `/users/${uid}/sessions/${sid}`,
     'PATCH',
@@ -449,7 +449,7 @@ class Cumulonimbus {
    */
   public getSelfSessions = this.manufactureMethodGet<
     [options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.Session, 'id' | 'name'>>
+    Data.List<Pick<Data.Session, 'id' | 'name'>>
   >((options) => `/users/me/sessions${this.toQueryString(options)}`);
 
   /**
@@ -459,7 +459,7 @@ class Cumulonimbus {
    */
   public getUserSessions = this.manufactureMethodGet<
     [uid: string, options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.Session, 'id' | 'name'>>
+    Data.List<Pick<Data.Session, 'id' | 'name'>>
   >((uid, options) => `/users/${uid}/sessions${this.toQueryString(options)}`);
 
   /**
@@ -469,7 +469,7 @@ class Cumulonimbus {
    */
   public deleteSelfSession = this.manufactureMethod<
     [sid?: null | string],
-    Cumulonimbus.Data.Success<'DELETE_SESSION_SUCCESS'>
+    Data.Success<'DELETE_SESSION_SUCCESS'>
   >((sid) => `/users/me/sessions/${sid ?? 'me'}`, 'DELETE');
 
   /**
@@ -479,7 +479,7 @@ class Cumulonimbus {
    */
   public deleteUserSession = this.manufactureMethod<
     [uid: string, sid: string],
-    Cumulonimbus.Data.Success<'DELETE_SESSION_SUCCESS'>
+    Data.Success<'DELETE_SESSION_SUCCESS'>
   >((uid, sid) => `/users/${uid}/sessions/${sid}`, 'DELETE');
 
   /**
@@ -489,7 +489,7 @@ class Cumulonimbus {
    */
   public deleteSelfSessions = this.manufactureMethod<
     [sessionIDs: string[]],
-    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+    Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >('/users/me/sessions', 'DELETE', WITH_BODY, (sessionIDs) =>
     JSON.stringify({ ids: sessionIDs }),
   );
@@ -501,7 +501,7 @@ class Cumulonimbus {
    */
   public deleteUserSessions = this.manufactureMethod<
     [uid: string, sessionIDs: string[]],
-    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+    Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/sessions`,
     'DELETE',
@@ -516,7 +516,7 @@ class Cumulonimbus {
    */
   public deleteAllSelfSessions = this.manufactureMethod<
     [includeSelf?: undefined | boolean],
-    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+    Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >(
     (includeSelf) =>
       `/users/me/sessions/all${this.toQueryString({
@@ -532,7 +532,7 @@ class Cumulonimbus {
    */
   public deleteAllUserSessions = this.manufactureMethod<
     [uid: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_SESSIONS_SUCCESS'>
+    Data.Success<'DELETE_SESSIONS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/sessions/all`,
     'DELETE',
@@ -554,7 +554,7 @@ class Cumulonimbus {
    */
   public getUsers = this.manufactureMethodGet<
     [options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.User, 'id' | 'username'>>
+    Data.List<Pick<Data.User, 'id' | 'username'>>
   >((options) => `/users${this.toQueryString(options)}`);
 
   /**
@@ -562,19 +562,16 @@ class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the user.
    * @link https://docs.alekeagle.me/api/account#get-users-me
    */
-  public getSelf = this.manufactureMethodGet<[], Cumulonimbus.Data.User>(
-    '/users/me',
-  );
+  public getSelf = this.manufactureMethodGet<[], Data.User>('/users/me');
 
   /**
    * Get information about a user.
    * @returns A promise that resolves to an API response containing the user.
    * @link https://docs.alekeagle.me/api/account#get-users-id
    */
-  public getUser = this.manufactureMethodGet<
-    [id: string],
-    Cumulonimbus.Data.User
-  >((user) => `/users/${user}`);
+  public getUser = this.manufactureMethodGet<[id: string], Data.User>(
+    (user) => `/users/${user}`,
+  );
 
   /**
    * Edit your own username.
@@ -586,7 +583,7 @@ class Cumulonimbus {
       username: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.User
+    Data.User
   >(`/users/me/username`, 'PUT', WITH_BODY, (username, passwordOrSFR) =>
     JSON.stringify({
       username,
@@ -606,7 +603,7 @@ class Cumulonimbus {
       username: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/username`,
     'PUT',
@@ -627,7 +624,7 @@ class Cumulonimbus {
    */
   public editSelfEmail = this.manufactureMethod<
     [email: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.User
+    Data.User
   >(`/users/me/email`, 'PUT', WITH_BODY, (email, passwordOrSFR) =>
     JSON.stringify({
       email,
@@ -647,7 +644,7 @@ class Cumulonimbus {
       email: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/email`,
     'PUT',
@@ -668,19 +665,14 @@ class Cumulonimbus {
    */
   public async verifyEmail(
     token: string,
-  ): Promise<
-    Cumulonimbus.APIResponse<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>
-  > {
-    return this.call<Cumulonimbus.Data.Success<'VERIFY_EMAIL_SUCCESS'>>(
-      `/users/verify`,
-      {
-        method: 'PUT',
-        headers: WITH_BODY,
-        body: JSON.stringify({
-          token,
-        }),
-      },
-    );
+  ): Promise<Cumulonimbus.APIResponse<Data.Success<'VERIFY_EMAIL_SUCCESS'>>> {
+    return this.call<Data.Success<'VERIFY_EMAIL_SUCCESS'>>(`/users/verify`, {
+      method: 'PUT',
+      headers: WITH_BODY,
+      body: JSON.stringify({
+        token,
+      }),
+    });
   }
 
   /**
@@ -690,7 +682,7 @@ class Cumulonimbus {
    */
   public verifyUserEmail = this.manufactureMethod<
     [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/verify`,
     'PUT',
@@ -709,7 +701,7 @@ class Cumulonimbus {
    */
   public resendSelfVerificationEmail = this.manufactureMethodGet<
     [],
-    Cumulonimbus.Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
+    Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
   >('/users/me/verify');
 
   /**
@@ -719,7 +711,7 @@ class Cumulonimbus {
    */
   public resendUserVerificationEmail = this.manufactureMethodGet<
     [id: string],
-    Cumulonimbus.Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
+    Data.Success<'SEND_VERIFICATION_EMAIL_SUCCESS'>
   >((uid) => `/users/${uid}/verify`);
 
   /**
@@ -729,7 +721,7 @@ class Cumulonimbus {
    */
   public unverifyUserEmail = this.manufactureMethod<
     [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/verify`,
     'DELETE',
@@ -752,7 +744,7 @@ class Cumulonimbus {
       newPassword: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.User
+    Data.User
   >('/users/me/password', 'PUT', WITH_BODY, (newPassword, passwordOrSFR) =>
     JSON.stringify({
       newPassword,
@@ -772,7 +764,7 @@ class Cumulonimbus {
       newPassword: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/password`,
     'PUT',
@@ -793,7 +785,7 @@ class Cumulonimbus {
    */
   public grantStaff = this.manufactureMethod<
     [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/staff`,
     'PUT',
@@ -814,7 +806,7 @@ class Cumulonimbus {
    */
   public revokeStaff = this.manufactureMethod<
     [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/staff`,
     'DELETE',
@@ -838,7 +830,7 @@ class Cumulonimbus {
       reason: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/ban`,
     'PUT',
@@ -860,7 +852,7 @@ class Cumulonimbus {
    */
   public unbanUser = this.manufactureMethod<
     [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/ban`,
     'DELETE',
@@ -880,7 +872,7 @@ class Cumulonimbus {
    */
   public editSelfDomainSelection = this.manufactureMethod<
     [options: { domain: string; subdomain?: string }],
-    Cumulonimbus.Data.User
+    Data.User
   >('/users/me/domain', 'PUT', WITH_BODY, JSON.stringify);
 
   /**
@@ -890,7 +882,7 @@ class Cumulonimbus {
    */
   public editUserDomainSelection = this.manufactureMethod<
     [id: string, options: { domain: string; subdomain?: string }],
-    Cumulonimbus.Data.User
+    Data.User
   >(
     (uid) => `/users/${uid}/domain`,
     'PUT',
@@ -905,7 +897,7 @@ class Cumulonimbus {
    */
   public deleteSelf = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_USER_SUCCESS'>
+    Data.Success<'DELETE_USER_SUCCESS'>
   >('/users/me', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -920,7 +912,7 @@ class Cumulonimbus {
    */
   public deleteUser = this.manufactureMethod<
     [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_USER_SUCCESS'>
+    Data.Success<'DELETE_USER_SUCCESS'>
   >(
     (uid) => `/users/${uid}`,
     'DELETE',
@@ -943,7 +935,7 @@ class Cumulonimbus {
       userIDs: string[],
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.Success<'DELETE_USERS_SUCCESS'>
+    Data.Success<'DELETE_USERS_SUCCESS'>
   >('/users', 'DELETE', WITH_BODY, (userIDs, passwordOrSFR) =>
     JSON.stringify({
       'ids': userIDs,
@@ -966,7 +958,7 @@ class Cumulonimbus {
         offset?: number;
       },
     ],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.Domain, 'id' | 'subdomains'>>
+    Data.List<Pick<Data.Domain, 'id' | 'subdomains'>>
   >((options) => {
     const { limit, offset } = options ?? {};
     return `/domains${this.toQueryString({
@@ -980,10 +972,9 @@ class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the domain.
    * @link https://docs.alekeagle.me/api/domain#get-domains-id
    */
-  public getDomain = this.manufactureMethodGet<
-    [id: string],
-    Cumulonimbus.Data.Domain
-  >((id) => `/domains/${id}`);
+  public getDomain = this.manufactureMethodGet<[id: string], Data.Domain>(
+    (id) => `/domains/${id}`,
+  );
 
   /**
    * Creates a domain.
@@ -992,7 +983,7 @@ class Cumulonimbus {
    */
   public createDomain = this.manufactureMethod<
     [id: string, subdomains?: boolean | undefined],
-    Cumulonimbus.Data.Domain
+    Data.Domain
   >('/domains', 'POST', WITH_BODY, (id, subdomains) =>
     JSON.stringify({ id, subdomains }),
   );
@@ -1002,20 +993,20 @@ class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the domain.
    * @link https://docs.alekeagle.me/api/domain#put-domains-id-subdomains
    */
-  public allowSubdomains = this.manufactureMethod<
-    [id: string],
-    Cumulonimbus.Data.Domain
-  >((id) => `/domains/${id}/subdomains`, 'PUT');
+  public allowSubdomains = this.manufactureMethod<[id: string], Data.Domain>(
+    (id) => `/domains/${id}/subdomains`,
+    'PUT',
+  );
 
   /**
    * Disallows subdomains for a domain.
    * @returns A promise that resolves to an API response containing the domain.
    * @link https://docs.alekeagle.me/api/domain#delete-domains-id-subdomains
    */
-  public disallowSubdomains = this.manufactureMethod<
-    [id: string],
-    Cumulonimbus.Data.Domain
-  >((id) => `/domains/${id}/subdomains`, 'DELETE');
+  public disallowSubdomains = this.manufactureMethod<[id: string], Data.Domain>(
+    (id) => `/domains/${id}/subdomains`,
+    'DELETE',
+  );
 
   /**
    * Deletes a domain.
@@ -1024,7 +1015,7 @@ class Cumulonimbus {
    */
   public deleteDomain = this.manufactureMethod<
     [id: string],
-    Cumulonimbus.Data.Success<'DELETE_DOMAIN_SUCCESS'>
+    Data.Success<'DELETE_DOMAIN_SUCCESS'>
   >((id) => `/domains/${id}`, 'DELETE');
 
   /**
@@ -1034,7 +1025,7 @@ class Cumulonimbus {
    */
   public deleteDomains = this.manufactureMethod<
     [domainIDs: string[]],
-    Cumulonimbus.Data.Success<'DELETE_DOMAINS_SUCCESS'>
+    Data.Success<'DELETE_DOMAINS_SUCCESS'>
   >('/domains', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   // File Methods
@@ -1046,7 +1037,7 @@ class Cumulonimbus {
    */
   public getAllFiles = this.manufactureMethodGet<
     [options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.File, 'id' | 'name'>>
+    Data.List<Pick<Data.File, 'id' | 'name'>>
   >((options) => `/files${this.toQueryString(options)}`);
 
   /**
@@ -1056,7 +1047,7 @@ class Cumulonimbus {
    */
   public getSelfFiles = this.manufactureMethodGet<
     [options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.File, 'id' | 'name'>>
+    Data.List<Pick<Data.File, 'id' | 'name'>>
   >((options) => `/users/me/files${this.toQueryString(options)}`);
 
   /**
@@ -1066,7 +1057,7 @@ class Cumulonimbus {
    */
   public getUserFiles = this.manufactureMethodGet<
     [uid: string, options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.File, 'id' | 'name'>>
+    Data.List<Pick<Data.File, 'id' | 'name'>>
   >((uid, options) => `/users/${uid}/files${this.toQueryString(options)}`);
 
   /**
@@ -1074,20 +1065,18 @@ class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the file.
    * @link https://docs.alekeagle.me/api/file#get-files-id
    */
-  public getArbitraryFile = this.manufactureMethodGet<
-    [id: string],
-    Cumulonimbus.Data.File
-  >((id) => `/files/${id}`);
+  public getArbitraryFile = this.manufactureMethodGet<[id: string], Data.File>(
+    (id) => `/files/${id}`,
+  );
 
   /**
    * Fetches a file belonging to you using its ID.
    * @returns A promise that resolves to an API response containing the file.
    * @link https://docs.alekeagle.me/api/file#get-users-me-files-id
    */
-  public getSelfFile = this.manufactureMethodGet<
-    [id: string],
-    Cumulonimbus.Data.File
-  >((id) => `/users/me/files/${id}`);
+  public getSelfFile = this.manufactureMethodGet<[id: string], Data.File>(
+    (id) => `/users/me/files/${id}`,
+  );
 
   /**
    * Fetches a file belonging to a user using its ID.
@@ -1096,7 +1085,7 @@ class Cumulonimbus {
    */
   public getUserFile = this.manufactureMethodGet<
     [uid: string, id: string],
-    Cumulonimbus.Data.File
+    Data.File
   >((uid, id) => `/users/${uid}/files/${id}`);
 
   /**
@@ -1106,7 +1095,7 @@ class Cumulonimbus {
    */
   public editSelfFilename = this.manufactureMethod<
     [id: string, name: string],
-    Cumulonimbus.Data.File
+    Data.File
   >(
     (id) => `/users/me/files/${id}/name`,
     'PUT',
@@ -1121,7 +1110,7 @@ class Cumulonimbus {
    */
   public editUserFilename = this.manufactureMethod<
     [uid: string, id: string, name: string],
-    Cumulonimbus.Data.File
+    Data.File
   >(
     (uid, id) => `/users/${uid}/files/${id}/name`,
     'PUT',
@@ -1134,10 +1123,10 @@ class Cumulonimbus {
    * @returns A promise that resolves to an API response containing the file.
    * @link https://docs.alekeagle.me/api/file#delete-users-me-files-id-name
    */
-  public deleteSelfFilename = this.manufactureMethod<
-    [id: string],
-    Cumulonimbus.Data.File
-  >((id) => `/users/me/files/${id}/name`, 'DELETE');
+  public deleteSelfFilename = this.manufactureMethod<[id: string], Data.File>(
+    (id) => `/users/me/files/${id}/name`,
+    'DELETE',
+  );
 
   /**
    * Delete the display name of a file belonging to a user.
@@ -1146,7 +1135,7 @@ class Cumulonimbus {
    */
   public deleteUserFilename = this.manufactureMethod<
     [uid: string, id: string],
-    Cumulonimbus.Data.File
+    Data.File
   >((uid, id) => `/users/${uid}/files/${id}/name`, 'DELETE');
 
   /**
@@ -1156,7 +1145,7 @@ class Cumulonimbus {
    */
   public editSelfFileExtension = this.manufactureMethod<
     [id: string, extension: string],
-    Cumulonimbus.Data.File
+    Data.File
   >(
     (id) => `/users/me/files/${id}/extension`,
     'PUT',
@@ -1171,7 +1160,7 @@ class Cumulonimbus {
    */
   public editUserFileExtension = this.manufactureMethod<
     [uid: string, id: string, extension: string],
-    Cumulonimbus.Data.File
+    Data.File
   >(
     (uid, id) => `/users/${uid}/files/${id}/extension`,
     'PUT',
@@ -1186,7 +1175,7 @@ class Cumulonimbus {
    */
   public deleteSelfFile = this.manufactureMethod<
     [id: string],
-    Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
+    Data.Success<'DELETE_FILE_SUCCESS'>
   >((id) => `/users/me/files/${id}`, 'DELETE');
 
   /**
@@ -1196,7 +1185,7 @@ class Cumulonimbus {
    */
   public deleteUserFile = this.manufactureMethod<
     [uid: string, id: string],
-    Cumulonimbus.Data.Success<'DELETE_FILE_SUCCESS'>
+    Data.Success<'DELETE_FILE_SUCCESS'>
   >((uid, id) => `/users/${uid}/files/${id}`, 'DELETE');
 
   /**
@@ -1206,7 +1195,7 @@ class Cumulonimbus {
    */
   public deleteSelfFiles = this.manufactureMethod<
     [ids: string[]],
-    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+    Data.Success<'DELETE_FILES_SUCCESS'>
   >('/users/me/files', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   /**
@@ -1216,7 +1205,7 @@ class Cumulonimbus {
    */
   public deleteUserFiles = this.manufactureMethod<
     [uid: string, ids: string[]],
-    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+    Data.Success<'DELETE_FILES_SUCCESS'>
   >(
     (uid) => `/users/${uid}/files`,
     'DELETE',
@@ -1231,7 +1220,7 @@ class Cumulonimbus {
    */
   public deleteArbitraryFiles = this.manufactureMethod<
     [ids: string[]],
-    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+    Data.Success<'DELETE_FILES_SUCCESS'>
   >('/files', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   /**
@@ -1241,7 +1230,7 @@ class Cumulonimbus {
    */
   public deleteAllSelfFiles = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+    Data.Success<'DELETE_FILES_SUCCESS'>
   >('/users/me/files/all', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1256,7 +1245,7 @@ class Cumulonimbus {
    */
   public deleteAllUserFiles = this.manufactureMethod<
     [user: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_FILES_SUCCESS'>
+    Data.Success<'DELETE_FILES_SUCCESS'>
   >(
     (uid) => `/users/${uid}/files/all`,
     'DELETE',
@@ -1279,9 +1268,7 @@ class Cumulonimbus {
    */
   public getInstructions = this.manufactureMethodGet<
     [options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<
-      Pick<Cumulonimbus.Data.Instruction, 'id' | 'name' | 'description'>
-    >
+    Data.List<Pick<Data.Instruction, 'id' | 'name' | 'description'>>
   >((options) => `/instructions${this.toQueryString(options)}`);
 
   /**
@@ -1291,7 +1278,7 @@ class Cumulonimbus {
    */
   public getInstruction = this.manufactureMethodGet<
     [id: string],
-    Cumulonimbus.Data.Instruction
+    Data.Instruction
   >((id) => `/instructions/${id}`);
 
   /**
@@ -1310,7 +1297,7 @@ class Cumulonimbus {
         filename?: string;
       },
     ],
-    Cumulonimbus.Data.Instruction
+    Data.Instruction
   >('/instructions', 'POST', WITH_BODY, (options) => JSON.stringify(options));
 
   /**
@@ -1320,7 +1307,7 @@ class Cumulonimbus {
    */
   public editInstructionName = this.manufactureMethod<
     [id: string, name: string],
-    Cumulonimbus.Data.Instruction
+    Data.Instruction
   >(
     (id) => `/instructions/${id}/name`,
     'PUT',
@@ -1335,7 +1322,7 @@ class Cumulonimbus {
    */
   public editInstructionDescription = this.manufactureMethod<
     [id: string, description: string],
-    Cumulonimbus.Data.Instruction
+    Data.Instruction
   >(
     (id) => `/instructions/${id}/description`,
     'PUT',
@@ -1350,7 +1337,7 @@ class Cumulonimbus {
    */
   public editInstructionFile = this.manufactureMethod<
     [id: string, content: string, filename?: string | undefined],
-    Cumulonimbus.Data.Instruction
+    Data.Instruction
   >(
     (id) => `/instructions/${id}/file`,
     'PUT',
@@ -1365,7 +1352,7 @@ class Cumulonimbus {
    */
   public editInstructionSteps = this.manufactureMethod<
     [id: string, steps: string[]],
-    Cumulonimbus.Data.Instruction
+    Data.Instruction
   >(
     (id) => `/instructions/${id}/steps`,
     'PUT',
@@ -1380,7 +1367,7 @@ class Cumulonimbus {
    */
   public deleteInstruction = this.manufactureMethod<
     [id: string],
-    Cumulonimbus.Data.Success<'DELETE_INSTRUCTION_SUCCESS'>
+    Data.Success<'DELETE_INSTRUCTION_SUCCESS'>
   >((id) => `/instructions/${id}`, 'DELETE');
 
   /**
@@ -1390,7 +1377,7 @@ class Cumulonimbus {
    */
   public deleteInstructions = this.manufactureMethod<
     [ids: string[]],
-    Cumulonimbus.Data.Success<'DELETE_INSTRUCTIONS_SUCCESS'>
+    Data.Success<'DELETE_INSTRUCTIONS_SUCCESS'>
   >('/instructions', 'DELETE', WITH_BODY, (ids) => JSON.stringify({ ids }));
 
   // KillSwitch Methods
@@ -1402,7 +1389,7 @@ class Cumulonimbus {
    */
   public getKillSwitches = this.manufactureMethodGet<
     [],
-    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    Data.List<Data.KillSwitch>
   >('/killswitches');
 
   /**
@@ -1412,10 +1399,10 @@ class Cumulonimbus {
    */
   public enableKillSwitch = this.manufactureMethod<
     [
-      id: Cumulonimbus.KillSwitches,
+      id: Enums.KillSwitches,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    Data.List<Data.KillSwitch>
   >(
     (id) => `/killswitches/${id}`,
     'PUT',
@@ -1435,10 +1422,10 @@ class Cumulonimbus {
    */
   public disableKillSwitch = this.manufactureMethod<
     [
-      id: Cumulonimbus.KillSwitches,
+      id: Enums.KillSwitches,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    Data.List<Data.KillSwitch>
   >(
     (id) => `/killswitches/${id}`,
     'DELETE',
@@ -1458,7 +1445,7 @@ class Cumulonimbus {
    */
   public disableAllKillSwitches = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.List<Cumulonimbus.Data.KillSwitch>
+    Data.List<Data.KillSwitch>
   >('/killswitches', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1475,7 +1462,7 @@ class Cumulonimbus {
    */
   public beginTOTPRegistration = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.SecondFactorTOTPRegistration
+    Data.SecondFactorTOTPRegistration
   >('/users/me/2fa/totp', 'POST', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1490,7 +1477,7 @@ class Cumulonimbus {
    */
   public confirmTOTPRegistration = this.manufactureMethod<
     [token: string, name: string, code: string],
-    Cumulonimbus.Data.SecondFactorRegisterSuccess
+    Data.SecondFactorRegisterSuccess
   >('/users/me/2fa/totp/confirm', 'POST', WITH_BODY, (token, name, code) =>
     JSON.stringify({ token, code, name }),
   );
@@ -1502,7 +1489,7 @@ class Cumulonimbus {
    */
   public beginWebAuthnRegistration = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.SecondFactorWebAuthnRegistration
+    Data.SecondFactorWebAuthnRegistration
   >('/users/me/2fa/webauthn/', 'POST', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1517,7 +1504,7 @@ class Cumulonimbus {
    */
   public confirmWebAuthnRegistration = this.manufactureMethod<
     [token: string, name: string, response: RegistrationResponseJSON],
-    Cumulonimbus.Data.SecondFactorRegisterSuccess
+    Data.SecondFactorRegisterSuccess
   >(
     '/users/me/2fa/webauthn/confirm',
     'POST',
@@ -1532,7 +1519,7 @@ class Cumulonimbus {
    */
   public regenerateBackupCodes = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.SecondFactorBackupRegisterSuccess
+    Data.SecondFactorBackupRegisterSuccess
   >('/users/me/2fa/backup', 'POST', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1547,7 +1534,7 @@ class Cumulonimbus {
    */
   public getSelfSecondFactors = this.manufactureMethodGet<
     [options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>>
+    Data.List<Pick<Data.SecondFactor, 'id' | 'name'>>
   >((options) => `/users/me/2fa${this.toQueryString(options)}`);
 
   /**
@@ -1557,7 +1544,7 @@ class Cumulonimbus {
    */
   public getUserSecondFactors = this.manufactureMethodGet<
     [id: string, options?: { limit?: number; offset?: number }],
-    Cumulonimbus.Data.List<Pick<Cumulonimbus.Data.SecondFactor, 'id' | 'name'>>
+    Data.List<Pick<Data.SecondFactor, 'id' | 'name'>>
   >((uid, options) => `/users/${uid}/2fa${this.toQueryString(options)}`);
 
   /**
@@ -1567,7 +1554,7 @@ class Cumulonimbus {
    */
   public getSelfSecondFactor = this.manufactureMethodGet<
     [id: string],
-    Cumulonimbus.Data.SecondFactor
+    Data.SecondFactor
   >((id) => `/users/me/2fa/${id}`);
 
   /**
@@ -1577,7 +1564,7 @@ class Cumulonimbus {
    */
   public getUserSecondFactor = this.manufactureMethodGet<
     [uid: string, id: string],
-    Cumulonimbus.Data.SecondFactor
+    Data.SecondFactor
   >((uid, id) => `/users/${uid}/2fa/${id}`);
 
   /**
@@ -1587,7 +1574,7 @@ class Cumulonimbus {
    */
   public deleteSelfSecondFactor = this.manufactureMethod<
     [id: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
+    Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
   >(
     (id) => `/users/me/2fa/${id}`,
     'DELETE',
@@ -1611,7 +1598,7 @@ class Cumulonimbus {
       id: string,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
+    Data.Success<'DELETE_SECOND_FACTOR_SUCCESS'>
   >(
     (uid, id) => `/users/${uid}/2fa/${id}`,
     'DELETE',
@@ -1631,7 +1618,7 @@ class Cumulonimbus {
    */
   public deleteSelfSecondFactors = this.manufactureMethod<
     [ids: string[], passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+    Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >('/users/me/2fa', 'DELETE', WITH_BODY, (ids, passwordOrSFR) =>
     JSON.stringify({
       ids,
@@ -1651,7 +1638,7 @@ class Cumulonimbus {
       ids: string[],
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+    Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/2fa`,
     'DELETE',
@@ -1672,7 +1659,7 @@ class Cumulonimbus {
    */
   public deleteAllSelfSecondFactors = this.manufactureMethod<
     [passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+    Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >('/users/me/2fa/all', 'DELETE', WITH_BODY, (passwordOrSFR) =>
     JSON.stringify({
       'password': typeof passwordOrSFR === 'string' ? passwordOrSFR : undefined,
@@ -1687,7 +1674,7 @@ class Cumulonimbus {
    */
   public deleteAllUserSecondFactors = this.manufactureMethod<
     [uid: string, passwordOrSFR: string | Cumulonimbus.SecondFactorResponse],
-    Cumulonimbus.Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
+    Data.Success<'DELETE_SECOND_FACTORS_SUCCESS'>
   >(
     (uid) => `/users/${uid}/2fa/all`,
     'DELETE',
@@ -1708,10 +1695,9 @@ class Cumulonimbus {
    * @link https://docs.alekeagle.me/api/utility#get-loglevel
    *
    */
-  public getLogLevel = this.manufactureMethodGet<
-    [],
-    Cumulonimbus.Data.LogLevel
-  >('/loglevel');
+  public getLogLevel = this.manufactureMethodGet<[], Data.LogLevel>(
+    '/loglevel',
+  );
 
   /**
    * Set the LogLevel.
@@ -1720,10 +1706,10 @@ class Cumulonimbus {
    */
   public setLogLevel = this.manufactureMethod<
     [
-      name: Cumulonimbus.LogLevel,
+      name: Enums.LogLevel,
       passwordOrSFR: string | Cumulonimbus.SecondFactorResponse,
     ],
-    Cumulonimbus.Data.LogLevel
+    Data.LogLevel
   >('/loglevel', 'PATCH', WITH_BODY, (name, passwordOrSFR) =>
     JSON.stringify({
       name,
@@ -1742,7 +1728,7 @@ class Cumulonimbus {
   public async upload(
     file: string | File | Blob | ArrayBuffer | Uint8Array,
     type?: string,
-  ): Promise<Cumulonimbus.APIResponse<Cumulonimbus.Data.SuccessfulUpload>> {
+  ): Promise<Cumulonimbus.APIResponse<Data.SuccessfulUpload>> {
     const formData = new FormData();
     if (typeof file === 'string') {
       formData.append('file', new Blob([file], { type: type || 'text/plain' }));
@@ -1767,14 +1753,10 @@ class Cumulonimbus {
     } else {
       throw new Error('Invalid file type');
     }
-    const res =
-      await this.authenticatedCall<Cumulonimbus.Data.SuccessfulUpload>(
-        '/upload',
-        {
-          method: 'POST',
-          body: formData,
-        },
-      );
+    const res = await this.authenticatedCall<Data.SuccessfulUpload>('/upload', {
+      method: 'POST',
+      body: formData,
+    });
     return res;
   }
 }
@@ -1823,343 +1805,6 @@ namespace Cumulonimbus {
       }
   );
 
-  export namespace Data {
-    export interface User {
-      id: string;
-      username: string;
-      email: string;
-      staff: boolean;
-      domain: string;
-      subdomain: string | null;
-      verifiedAt: string | null;
-      bannedAt: string | null;
-      twoFactorBackupCodeUsedAt: string | null;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    export interface Session {
-      id: number;
-      exp: number;
-      name: string;
-      permissionFlags: number;
-      usedAt: string;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    export interface List<T> {
-      count: number;
-      items: T[];
-    }
-
-    export type Success<T extends keyof Successes = keyof Successes> = {
-      [K in keyof Successes[T]]: Successes[T][K];
-    };
-
-    export interface Instruction {
-      id: string;
-      name: string;
-      description: string;
-      steps: string[];
-      filename: string;
-      content: string;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    export interface Domain {
-      id: string;
-      subdomains: boolean;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    export type Error<T extends keyof Errors = keyof Errors> = {
-      [K in keyof Errors[T]]: Errors[T][K];
-    };
-
-    export interface SuccessfulAuth {
-      token: string;
-      exp: number;
-    }
-
-    export interface SecondFactor {
-      id: string;
-      name: string;
-      type: ('totp' | 'webauthn')[];
-      usedAt: string | null;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    export interface File {
-      id: string;
-      name: string;
-      userID: string;
-      size: number;
-      createdAt: string;
-      updatedAt: string;
-    }
-
-    export interface SuccessfulUpload {
-      url: string;
-      thumbnail: string;
-      manage: string;
-    }
-
-    export interface KillSwitch {
-      id: number;
-      name: string;
-      state: boolean;
-    }
-
-    export interface APIStatus {
-      version: string;
-      hello: 'world';
-    }
-
-    export interface SecondFactorBaseRegistration {
-      token: string;
-      exp: number;
-      type: 'totp' | 'webauthn';
-    }
-
-    export interface SecondFactorTOTPRegistration extends SecondFactorBaseRegistration {
-      type: 'totp';
-      secret: string;
-      algorithm: string;
-      digits: number;
-      period: number;
-    }
-    export interface SecondFactorWebAuthnRegistration
-      extends
-        SecondFactorBaseRegistration,
-        PublicKeyCredentialCreationOptionsJSON {
-      type: 'webauthn';
-    }
-
-    export interface SecondFactorRegisterSuccess {
-      id: string;
-      name: string;
-      type: 'totp' | 'webauthn';
-      codes?: string[];
-    }
-
-    export interface SecondFactorBackupRegisterSuccess {
-      codes: string[];
-    }
-
-    export interface ScopedSessionCreate extends Session {
-      token: string;
-    }
-
-    export interface LogLevel {
-      name: string;
-    }
-  }
-
-  export interface Errors {
-    INVALID_ENDPOINT_ERROR: {
-      code: 'INVALID_ENDPOINT_ERROR';
-      message: 'Invalid Endpoint';
-    };
-    INSUFFICIENT_PERMISSIONS_ERROR: {
-      code: 'INSUFFICIENT_PERMISSIONS_ERROR';
-      message: 'Insufficient Permissions';
-    };
-    ENDPOINT_REQUIRES_SECOND_FACTOR_ERROR: {
-      code: 'ENDPOINT_REQUIRES_SECOND_FACTOR_ERROR';
-      message: 'Endpoint Requires Second Factor';
-    };
-    INVALID_USER_ERROR: {
-      code: 'INVALID_USER_ERROR';
-      message: 'Invalid User';
-    };
-    USER_REQUIRES_SECOND_FACTOR_ERROR: {
-      code: 'USER_REQUIRES_SECOND_FACTOR_ERROR';
-      message: 'User Requires Second Factor';
-    };
-    INVALID_USERNAME_ERROR: {
-      code: 'INVALID_USERNAME_ERROR';
-      message: 'Invalid Username';
-    };
-    INVALID_SECOND_FACTOR_ERROR: {
-      code: 'INVALID_SECOND_FACTOR_ERROR';
-      message: 'Invalid Second Factor';
-    };
-    INVALID_SECOND_FACTOR_METHOD_ERROR: {
-      code: 'INVALID_SECOND_FACTOR_METHOD_ERROR';
-      message: 'Invalid Second Factor Method';
-    };
-    INVALID_SECOND_FACTOR_RESPONSE_ERROR: {
-      code: 'INVALID_SECOND_FACTOR_RESPONSE_ERROR';
-      message: 'Invalid Second Factor Response';
-    };
-    SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR: {
-      code: 'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR';
-      message: 'Second Factor Challenge Required';
-      token: string;
-      types: ('totp' | 'backup' | 'webauthn')[];
-      challenge?: PublicKeyCredentialRequestOptionsJSON;
-    };
-    INVALID_PASSWORD_ERROR: {
-      code: 'INVALID_PASSWORD_ERROR';
-      message: 'Invalid Password';
-    };
-    INVALID_EMAIL_ERROR: {
-      code: 'INVALID_EMAIL_ERROR';
-      message: 'Invalid Email';
-    };
-    EMAIL_NOT_VERIFIED_ERROR: {
-      code: 'EMAIL_NOT_VERIFIED_ERROR';
-      message: 'Email Not Verified';
-    };
-    EMAIL_ALREADY_VERIFIED_ERROR: {
-      code: 'EMAIL_ALREADY_VERIFIED_ERROR';
-      message: 'Email Already Verified';
-    };
-    INVALID_VERIFICATION_TOKEN_ERROR: {
-      code: 'INVALID_VERIFICATION_TOKEN_ERROR';
-      message: 'Invalid Verification Token';
-    };
-    INVALID_SESSION_ERROR: {
-      code: 'INVALID_SESSION_ERROR';
-      message: 'Invalid Session';
-    };
-    INVALID_DOMAIN_ERROR: {
-      code: 'INVALID_DOMAIN_ERROR';
-      message: 'Invalid Domain';
-    };
-    SUBDOMAIN_TOO_LONG_ERROR: {
-      code: 'SUBDOMAIN_TOO_LONG_ERROR';
-      message: 'Subdomain Too Long';
-    };
-    INVALID_FILE_ERROR: {
-      code: 'INVALID_FILE_ERROR';
-      message: 'Invalid File';
-    };
-    INVALID_INSTRUCTION_ERROR: {
-      code: 'INVALID_INSTRUCTION_ERROR';
-      message: 'Invalid Instruction';
-    };
-    INVALID_LOGLEVEL_ERROR: {
-      code: 'INVALID_LOGLEVEL_ERROR';
-      message: 'Invalid LogLevel';
-    };
-    SUBDOMAIN_NOT_ALLOWED_ERROR: {
-      code: 'SUBDOMAIN_NOT_ALLOWED_ERROR';
-      message: 'Subdomain Not Allowed';
-    };
-    DOMAIN_EXISTS_ERROR: {
-      code: 'DOMAIN_EXISTS_ERROR';
-      message: 'Domain Exists';
-    };
-    USER_EXISTS_ERROR: {
-      code: 'USER_EXISTS_ERROR';
-      message: 'User Exists';
-    };
-    INSTRUCTION_EXISTS_ERROR: {
-      code: 'INSTRUCTION_EXISTS_ERROR';
-      message: 'Instruction Exists';
-    };
-    MISSING_FIELDS_ERROR: {
-      code: 'MISSING_FIELDS_ERROR';
-      message: 'Missing Fields';
-      fields: string[];
-    };
-    BANNED_ERROR: {
-      code: 'BANNED_ERROR';
-      message: 'Banned';
-    };
-    BODY_TOO_LARGE_ERROR: {
-      code: 'BODY_TOO_LARGE_ERROR';
-      message: 'Body Too Large';
-    };
-    SERVICE_UNAVAILABLE_ERROR: {
-      code: 'SERVICE_UNAVAILABLE_ERROR';
-      message: 'Service Unavailable';
-      feature: number;
-    };
-    RATELIMITED_ERROR: {
-      code: 'RATELIMITED_ERROR';
-      message: 'You Have Been Ratelimited. Please Try Again Later.';
-    };
-    INTERNAL_ERROR: {
-      code: 'INTERNAL_ERROR';
-      message: 'Internal Server Error';
-    };
-    NOT_IMPLEMENTED_ERROR: {
-      code: 'NOT_IMPLEMENTED_ERROR';
-      message: 'Not Implemented';
-    };
-  }
-
-  export interface Successes {
-    DELETE_USER_SUCCESS: {
-      code: 'DELETE_USER_SUCCESS';
-      message: 'User Successfully Deleted';
-    };
-    DELETE_USERS_SUCCESS: {
-      code: 'DELETE_USERS_SUCCESS';
-      message: 'Users Successfully Deleted';
-      count: number;
-    };
-    DELETE_FILE_SUCCESS: {
-      code: 'DELETE_FILE_SUCCESS';
-      message: 'File Successfully Deleted';
-    };
-    DELETE_FILES_SUCCESS: {
-      code: 'DELETE_FILES_SUCCESS';
-      message: 'Files Successfully Deleted';
-      count: number;
-    };
-    DELETE_SESSION_SUCCESS: {
-      code: 'DELETE_SESSION_SUCCESS';
-      message: 'Session Successfully Deleted';
-    };
-    DELETE_SESSIONS_SUCCESS: {
-      code: 'DELETE_SESSIONS_SUCCESS';
-      message: 'Sessions Successfully Deleted';
-      count: number;
-    };
-    DELETE_DOMAIN_SUCCESS: {
-      code: 'DELETE_DOMAIN_SUCCESS';
-      message: 'Domain Successfully Deleted';
-    };
-    DELETE_DOMAINS_SUCCESS: {
-      code: 'DELETE_DOMAINS_SUCCESS';
-      message: 'Domains Successfully Deleted';
-      count: number;
-    };
-    DELETE_INSTRUCTION_SUCCESS: {
-      code: 'DELETE_INSTRUCTION_SUCCESS';
-      message: 'Instruction Successfully Deleted';
-    };
-    DELETE_INSTRUCTIONS_SUCCESS: {
-      code: 'DELETE_INSTRUCTIONS_SUCCESS';
-      message: 'Instructions Successfully Deleted';
-      count: number;
-    };
-    SEND_VERIFICATION_EMAIL_SUCCESS: {
-      code: 'SEND_VERIFICATION_EMAIL_SUCCESS';
-      message: 'Verification Email Successfully Sent';
-    };
-    VERIFY_EMAIL_SUCCESS: {
-      code: 'VERIFY_EMAIL_SUCCESS';
-      message: 'Successfully Verified Email';
-    };
-    DELETE_SECOND_FACTOR_SUCCESS: {
-      code: 'DELETE_SECOND_FACTOR_SUCCESS';
-      message: 'Second Factor Successfully Deleted';
-    };
-    DELETE_SECOND_FACTORS_SUCCESS: {
-      code: 'DELETE_SECOND_FACTORS_SUCCESS';
-      message: 'Second Factors Successfully Deleted';
-      count: number;
-    };
-  }
-
   export class ResponseError<
     T extends keyof Errors = keyof Errors,
   > extends Error {
@@ -2190,10 +1835,10 @@ namespace Cumulonimbus {
   }
 
   export class SecondFactorChallengeRequiredError extends ResponseError<'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'> {
-  // These are already assigned in the parent class, so we can safely declare them without initializing them
-  	token!: string;
-	  types!: ('totp' | 'backup' | 'webauthn')[];
-	  challenge!: PublicKeyCredentialRequestOptionsJSON | undefined;
+    // These are already assigned in the parent class, so we can safely declare them without initializing them
+    token!: string;
+    types!: ('totp' | 'backup' | 'webauthn')[];
+    challenge!: PublicKeyCredentialRequestOptionsJSON | undefined;
     constructor(
       response: Errors['SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'],
       ratelimit: RatelimitData | null = null,
@@ -2213,82 +1858,11 @@ namespace Cumulonimbus {
     }
   }
 
-  export enum KillSwitches {
-    // Account related killSwitches
-    ACCOUNT_CREATE,
-    ACCOUNT_MODIFY,
-    ACCOUNT_DELETE,
-    ACCOUNT_EMAIL_VERIFY,
-    ACCOUNT_LOGIN,
-    // File related killSwitches
-    FILE_CREATE,
-    FILE_MODIFY,
-    FILE_DELETE,
-    // The Global KillSwitch
-    GLOBAL,
-  }
-
-  export enum PermissionFlags {
-    ALL = 1 << 0,
-    UPLOAD_FILE = 1 << 1,
-    ACCOUNT_READ = 1 << 2,
-    ACCOUNT_MODIFY = 1 << 3,
-    SECOND_FACTOR_READ = 1 << 4,
-    SESSION_READ = 1 << 5,
-    SESSION_MODIFY = 1 << 6,
-    FILE_READ = 1 << 7,
-    FILE_MODIFY = 1 << 8,
-    STAFF_READ_ACCOUNTS = 1 << 9,
-    STAFF_MODIFY_ACCOUNTS = 1 << 10,
-    STAFF_READ_SECOND_FACTORS = 1 << 11,
-    STAFF_MODIFY_SECOND_FACTORS = 1 << 12,
-    STAFF_READ_SESSIONS = 1 << 13,
-    STAFF_MODIFY_SESSIONS = 1 << 14,
-    STAFF_READ_FILES = 1 << 15,
-    STAFF_MODIFY_FILES = 1 << 16,
-    STAFF_MODIFY_DOMAINS = 1 << 17,
-    STAFF_MODIFY_INSTRUCTIONS = 1 << 18,
-    STAFF_MODIFY_KILLSWITCHES = 1 << 19,
-    STAFF_MODIFY_LOGLEVEL = 1 << 20,
-  }
-
-  export enum PermissionGroups {
-    ACCOUNT = PermissionFlags.ACCOUNT_READ | PermissionFlags.ACCOUNT_MODIFY,
-    SESSION = PermissionFlags.SESSION_READ | PermissionFlags.SESSION_MODIFY,
-    FILE = PermissionFlags.FILE_READ | PermissionFlags.FILE_MODIFY,
-    STAFF = PermissionFlags.STAFF_READ_ACCOUNTS |
-      PermissionFlags.STAFF_MODIFY_ACCOUNTS |
-      PermissionFlags.STAFF_READ_SECOND_FACTORS |
-      PermissionFlags.STAFF_MODIFY_SECOND_FACTORS |
-      PermissionFlags.STAFF_READ_SESSIONS |
-      PermissionFlags.STAFF_MODIFY_SESSIONS |
-      PermissionFlags.STAFF_READ_FILES |
-      PermissionFlags.STAFF_MODIFY_FILES |
-      PermissionFlags.STAFF_MODIFY_DOMAINS |
-      PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
-      PermissionFlags.STAFF_MODIFY_KILLSWITCHES |
-      PermissionFlags.STAFF_MODIFY_LOGLEVEL,
-    STAFF_ACCOUNTS = PermissionFlags.STAFF_READ_ACCOUNTS |
-      PermissionFlags.STAFF_MODIFY_ACCOUNTS,
-    STAFF_SECOND_FACTORS = PermissionFlags.STAFF_READ_SECOND_FACTORS |
-      PermissionFlags.STAFF_MODIFY_SECOND_FACTORS,
-    STAFF_SESSIONS = PermissionFlags.STAFF_READ_SESSIONS |
-      PermissionFlags.STAFF_MODIFY_SESSIONS,
-    STAFF_FILES = PermissionFlags.STAFF_READ_FILES |
-      PermissionFlags.STAFF_MODIFY_FILES,
-    STAFF_ONLY = PermissionFlags.STAFF_MODIFY_DOMAINS |
-      PermissionFlags.STAFF_MODIFY_INSTRUCTIONS |
-      PermissionFlags.STAFF_MODIFY_KILLSWITCHES |
-      PermissionFlags.STAFF_MODIFY_LOGLEVEL,
-  }
-
-  export enum LogLevel {
-    NONE = 'NONE',
-    ERROR = 'ERROR',
-    WARN = 'WARN',
-    INFO = 'INFO',
-    DEBUG = 'DEBUG',
-  }
+  // for some reason you can't do export {} in a namespace (very arbitrary and dumb and cruel)
+  export const KillSwitches = Enums.KillSwitches;
+  export const PermissionFlags = Enums.PermissionFlags;
+  export const PermissionGroups = Enums.PermissionGroups;
+  export const LogLevel = Enums.LogLevel;
 }
 
 export default Cumulonimbus;
