@@ -1831,7 +1831,6 @@ namespace Cumulonimbus {
       this.code = response.code as T;
       this.message = response.message;
       this.ratelimit = ratelimit;
-      Object.assign(this, response);
     }
 
     get name() {
@@ -1840,25 +1839,29 @@ namespace Cumulonimbus {
   }
 
   export class MissingFieldsError extends ResponseError<'MISSING_FIELDS_ERROR'> {
-    fields!: string[];
+    fields: string[];
     constructor(
       response: _Errors['MISSING_FIELDS_ERROR'],
       ratelimit: RatelimitData | null = null,
     ) {
       super(response, ratelimit);
+      this.fields = response.fields;
     }
   }
 
   export class SecondFactorChallengeRequiredError extends ResponseError<'SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'> {
     // These are already assigned in the parent class, so we can safely declare them without initializing them
-    token!: string;
-    types!: ('totp' | 'backup' | 'webauthn')[];
-    challenge!: PublicKeyCredentialRequestOptionsJSON | undefined;
+    token: string;
+    types: ('totp' | 'backup' | 'webauthn')[];
+    challenge: PublicKeyCredentialRequestOptionsJSON | undefined;
     constructor(
       response: _Errors['SECOND_FACTOR_CHALLENGE_REQUIRED_ERROR'],
       ratelimit: RatelimitData | null = null,
     ) {
       super(response, ratelimit);
+      this.token = response.token;
+      this.types = response.types;
+      this.challenge = response.challenge;
     }
   }
 
