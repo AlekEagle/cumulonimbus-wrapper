@@ -1304,9 +1304,7 @@ class Cumulonimbus {
         id: string;
         name: string;
         description: string;
-        steps: string[];
-        content: string;
-        filename?: string;
+        steps: Cumulonimbus.Data.InstructionStep[];
       },
     ],
     Structures.Instruction
@@ -1343,27 +1341,12 @@ class Cumulonimbus {
   );
 
   /**
-   * Edit an instruction's content.
-   * @returns A promise that resolves to an API response containing the instruction.
-   * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-content
-   */
-  public editInstructionFile = this.manufactureMethod<
-    [id: string, content: string, filename?: string | undefined],
-    Structures.Instruction
-  >(
-    (id) => `/instructions/${id}/file`,
-    'PUT',
-    WITH_BODY,
-    (_, content, filename) => JSON.stringify({ content, filename }),
-  );
-
-  /**
    * Edit an instruction's steps.
    * @returns A promise that resolves to an API response containing the instruction.
    * @link https://docs.alekeagle.me/api/instruction#put-instructions-id-steps
    */
   public editInstructionSteps = this.manufactureMethod<
-    [id: string, steps: string[]],
+    [id: string, steps: Cumulonimbus.Data.InstructionStep[]],
     Structures.Instruction
   >(
     (id) => `/instructions/${id}/steps`,
@@ -1888,6 +1871,8 @@ namespace Cumulonimbus {
   export type PermissionGroups = Enums.PermissionGroups;
   export const LogLevel = Enums.LogLevel;
   export type LogLevel = Enums.LogLevel;
+  export const InstructionStepActions = Enums.InstructionStepActions;
+  export type InstructionStepActions = Enums.InstructionStepActions;
 }
 
 export default Cumulonimbus;
